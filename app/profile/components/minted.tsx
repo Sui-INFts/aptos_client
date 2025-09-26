@@ -4,7 +4,6 @@ import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import { useWallet } from "@aptos-labs/wallet-adapter-react";
 import { toast } from "@/components/ui/use-toast";
-// import { getObjectType } from "@mysten/sui.js/utils";
 
 // Types for our NFT and its data structure
 interface NFT {
@@ -17,32 +16,11 @@ interface NFT {
   atoma_model_id: string;
 }
 
-interface SuiObjectContent {
-  fields: {
-    id: { id: string };
-    name: string;
-    description: string;
-    image_url: string;
-    public_metadata_uri: string;
-    private_metadata_uri: string;
-    atoma_model_id: string;
-    interaction_count: string; 
-    evolution_stage: string;   
-    owner: string;
-    balance: { value: string };
-  };
-}
-
 export default function MintedNFTs() {
-  const account = useCurrentAccount();
-  const suiClient = useSuiClient();
+  const { account } = useWallet();
   const [nfts, setNfts] = useState<NFT[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  // Get the package ID from environment variables
-  const packageId = process.env.NEXT_PUBLIC_PACKAGE_ID || 
-    "0x7111b909689ec53115a2360c3fe9106c2c6f8e152dbc37d4a98bae51a37f8f62";
 
   useEffect(() => {
     const fetchNFTs = async () => {
@@ -55,169 +33,81 @@ export default function MintedNFTs() {
       setError(null);
 
       try {
-        console.log("Fetching NFTs for wallet:", account.address);
-        console.log("Using package ID:", packageId);
+        // Placeholder implementation for Aptos NFT fetching
+        // You would need to implement the actual NFT fetching logic based on your Aptos smart contract
+        console.log("NFT fetching not yet implemented for Aptos");
         
-        // Using the module path from contract
-        const moduleType = "infts_protocol";
-        const objectType = `${packageId}::${moduleType}::inft_core::INFT`;
-        
-        console.log("Looking for objects of type:", objectType);
-        
-        const infts: NFT[] = [];
-        let cursor: string | null = null;
-
-        do {
-          // Query owned objects
-          const response = await suiClient.getOwnedObjects({
-            owner: account.address,
-            options: { 
-              showContent: true,
-              showType: true,
-              showOwner: true,
-            },
-            cursor,
-          });
-
-          console.log(`Fetched ${response.data.length} objects, page ${cursor ? 'with cursor' : 'first page'}`);
-          
-       
-          if (response.data.length > 0) {
-            const types = response.data.map(obj => obj.data?.type || "unknown").join(", ");
-            console.log("Object types found:", types);
-          }
-
-          // Filter for INFTs from our specific package
-          const filteredNFTs = response.data
-            .filter((obj) => {
-              const type = obj.data?.type;
-              // Use a more flexible approach to match module
-              return type && (
-                type.includes(`${moduleType}::inft_core::INFT`) || 
-                type.includes(`${packageId}::${moduleType}::inft_core::INFT`)
-              );
-            })
-            .map((obj) => {
-              if (!obj.data?.objectId || !obj.data?.content) {
-                console.log("Skipping object without ID or content:", obj.data?.objectId);
-                return null;
-              }
-
-              try {
-                // Type assertion with safety check
-                const content = obj.data.content as unknown as SuiObjectContent;
-                const fields = content.fields;
-
-                console.log("Processing NFT:", obj.data.objectId);
-                
-                return {
-                  id: obj.data.objectId,
-                  name: fields.name || "Unnamed NFT",
-                  description: fields.description || "",
-                  image_url: fields.image_url || "/placeholder-image.png",
-                  evolution_stage: parseInt(fields.evolution_stage) || 0,
-                  interaction_count: parseInt(fields.interaction_count) || 0,
-                  atoma_model_id: fields.atoma_model_id || "",
-                };
-              } catch (err) {
-                console.error("Error parsing NFT data:", err, obj);
-                return null;
-              }
-            })
-            .filter((nft): nft is NFT => nft !== null);
-
-          console.log(`Filtered ${filteredNFTs.length} INFTs`);
-          infts.push(...filteredNFTs);
-          cursor = response.hasNextPage ? (response.nextCursor || null) : null;
-        } while (cursor);
-
-        console.log(`Found ${infts.length} INFTs owned by this wallet`);
-        setNfts(infts);
+        // For now, return empty array
+        setNfts([]);
       } catch (error) {
         console.error("Error fetching NFTs:", error);
-        setError("Failed to fetch your NFTs. Please try again later.");
-        toast.error("Failed to fetch minted NFTs");
+        setError("Failed to fetch NFTs");
+        toast({
+          title: "Error",
+          description: "Failed to fetch your minted NFTs",
+          variant: "destructive",
+        });
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchNFTs();
-  }, [account?.address, suiClient, packageId]);
+  }, [account?.address]);
 
-  // Loading state
   if (isLoading) {
     return (
-      <div className="text-center py-16">
-        <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]" />
-        <p className="mt-4 text-muted-foreground">Loading your NFTs...</p>
+      <div className="flex items-center justify-center p-8">
+        <div className="text-white">Loading your minted NFTs...</div>
       </div>
     );
   }
 
-  // Error state
   if (error) {
     return (
-      <div className="text-center text-red-500 py-16">
-        <p className="text-lg font-semibold mb-2">Error</p>
-        <p className="text-sm">{error}</p>
+      <div className="flex items-center justify-center p-8">
+        <div className="text-red-400">{error}</div>
       </div>
     );
   }
 
-  // Wallet not connected state
-  if (!account) {
-    return (
-      <div className="text-center text-muted-foreground py-16">
-        <p className="text-lg font-semibold mb-2">Connect wallet to view minted NFTs</p>
-        <p className="text-sm">Please connect your wallet to see your INFTs.</p>
-      </div>
-    );
-  }
-
-  // Empty state
   if (nfts.length === 0) {
     return (
-      <div className="text-center text-muted-foreground py-16">
-        <p className="text-lg font-semibold mb-2">No INFTs found</p>
-        <p className="text-sm">You don&apos;t have any INFTs from this collection yet.</p>
+      <div className="flex flex-col items-center justify-center p-8 text-center">
+        <div className="w-16 h-16 mb-4 rounded-full bg-gray-800 flex items-center justify-center">
+          <Image
+            src="/figmaAssets/bold---astronomy---star-circle-4.svg"
+            alt="No NFTs"
+            width={32}
+            height={32}
+            className="opacity-50"
+          />
+        </div>
+        <h3 className="text-xl font-semibold text-white mb-2">No NFTs Found</h3>
+        <p className="text-zinc-400">You haven&apos;t minted any NFTs yet.</p>
       </div>
     );
   }
 
-  // Display grid of NFTs
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {nfts.map((nft) => (
-        <div key={nft.id} className="bg-gray-800 rounded-lg p-4 flex flex-col">
-          <div className="relative w-full h-48 mb-4">
-            {nft.image_url ? (
-              <Image
-                src={nft.image_url}
-                alt={nft.name}
-                fill
-                className="object-cover rounded-md"
-                onError={(e) => {
-                  console.warn(`Failed to load image for NFT: ${nft.id}`);
-                  // Update src to fallback image when original fails
-                  const target = e.target as HTMLImageElement;
-                  target.src = "/placeholder-image.png";
-                }}
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center bg-gray-700 rounded-md">
-                <span className="text-gray-400">No image</span>
-              </div>
-            )}
+        <div key={nft.id} className="bg-gray-800 rounded-lg overflow-hidden hover:bg-gray-700 transition-colors">
+          <div className="aspect-square relative">
+            <Image
+              src={nft.image_url}
+              alt={nft.name}
+              fill
+              className="object-cover"
+            />
           </div>
-          <h3 className="text-lg font-semibold text-white mb-2">{nft.name}</h3>
-          <p className="text-sm text-muted-foreground mb-4 line-clamp-3">{nft.description}</p>
-          <div className="flex justify-between text-xs text-gray-400 mt-auto">
-            <span>Evolution: {nft.evolution_stage}</span>
-            <span>Interactions: {nft.interaction_count}</span>
-          </div>
-          <div className="text-xs text-gray-400 mt-2 truncate">
-            ID: {nft.id.slice(0, 8)}...{nft.id.slice(-6)}
+          <div className="p-4">
+            <h3 className="text-lg font-semibold text-white mb-2">{nft.name}</h3>
+            <p className="text-zinc-400 text-sm mb-3 line-clamp-2">{nft.description}</p>
+            <div className="flex justify-between items-center text-sm">
+              <span className="text-zinc-400">Stage: {nft.evolution_stage}</span>
+              <span className="text-zinc-400">Interactions: {nft.interaction_count}</span>
+            </div>
           </div>
         </div>
       ))}

@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { HeroHeader } from "@/components/header";
 import { useWallet } from "@aptos-labs/wallet-adapter-react";
-import { Wallet, Clock, DollarSign, Activity, Shield, AlertCircle, CheckCircle, Zap, RefreshCw, Image, Coins } from 'lucide-react';
+import { Wallet, Clock, Activity, Shield, AlertCircle, CheckCircle, Zap, RefreshCw, Image, Coins } from 'lucide-react';
 import { CreditScoreRing } from "./components/creditScoreRing";
 import { MetricCard } from "./components/metricCard";
 import { CreditFactorItem } from "./components/creditFactorItem";
@@ -86,13 +86,12 @@ const Dashboard: React.FC = () => {
       const transactions = await client.getAccountTransactions({
         accountAddress: address,
         options: {
-          limit: 1,
-          order: "ascending"
+          limit: 1
         }
       });
 
-      if (transactions && transactions.length > 0 && transactions[0].timestamp) {
-        const firstTxTime = new Date(transactions[0].timestamp).getTime();
+      if (transactions && transactions.length > 0 && 'timestamp' in transactions[0]) {
+        const firstTxTime = new Date((transactions[0] as { timestamp: string }).timestamp).getTime();
         const currentTime = Date.now();
         const ageInDays = Math.floor((currentTime - firstTxTime) / (1000 * 60 * 60 * 24));
         return Math.max(ageInDays, 1);
@@ -162,7 +161,7 @@ const Dashboard: React.FC = () => {
       // Process APT balance
       const aptResource = resources.find(r => r.type === "0x1::coin::CoinStore<0x1::aptos_coin::AptosCoin>");
       if (aptResource) {
-        const balance = parseInt((aptResource.data as any).coin.value);
+        const balance = parseInt((aptResource.data as { coin: { value: string } }).coin.value);
         const aptAmount = balance / Math.pow(10, 8); // APT has 8 decimals
         const aptValue = aptAmount * aptPrice;
 
@@ -191,7 +190,7 @@ const Dashboard: React.FC = () => {
 
       for (const resource of coinResources) {
         try {
-          const balance = parseInt((resource.data as any).coin.value);
+          const balance = parseInt((resource.data as { coin: { value: string } }).coin.value);
           const coinType = resource.type.match(/CoinStore<(.+)>/)?.[1];
           
           if (coinType && balance > 0) {
@@ -273,7 +272,7 @@ const Dashboard: React.FC = () => {
       // Calculate gas spent (simplified)
       const totalGasSpent = transactions.reduce((total, txn) => {
         try {
-          const gasUsed = txn.gas_used || "0";
+          const gasUsed = ('gas_used' in txn ? (txn as { gas_used: string }).gas_used : "0");
           return total + parseInt(gasUsed);
         } catch (error) {
           console.warn('Error calculating gas for transaction:', txn.hash, error);
@@ -282,7 +281,7 @@ const Dashboard: React.FC = () => {
       }, 0);
 
       // Calculate address age
-      const addressAge = await calculateAddressAge(account.address);
+      const addressAge = await calculateAddressAge(account.address.toStringLong());
 
       // Calculate credit score
       const creditScore = calculateCreditScore({

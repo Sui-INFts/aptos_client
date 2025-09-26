@@ -1,5 +1,5 @@
 // Aptos transaction types (placeholder)
-type TransactionBlock = any;
+// type TransactionBlock = any;
 
 // Walrus storage connection details
 const AGGREGATOR = process.env.NEXT_PUBLIC_WALRUS_AGGREGATOR_URL || "https://aggregator.walrus-testnet.walrus.space";

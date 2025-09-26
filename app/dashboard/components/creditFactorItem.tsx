@@ -8,7 +8,7 @@ interface CreditFactor {
     icon: IconComponent;
   }
 
-interface CreditFactorItemProps extends CreditFactor {}
+type CreditFactorItemProps = CreditFactor;
 
 export const CreditFactorItem: React.FC<CreditFactorItemProps> = ({ 
     factor, 

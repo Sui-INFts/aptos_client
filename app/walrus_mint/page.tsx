@@ -22,7 +22,7 @@ interface NFTFormData {
 
 export default function MintNFT() {
   const router = useRouter();
-  const { connected, account, signAndSubmitTransaction } = useWallet();
+  const { account } = useWallet();
   const networkVariables = getNetworkVariables();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);

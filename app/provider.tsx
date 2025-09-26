@@ -4,6 +4,7 @@ import React from "react";
 import { AptosWalletAdapterProvider } from "@aptos-labs/wallet-adapter-react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
+import { Network } from "@aptos-labs/ts-sdk";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -20,12 +21,12 @@ export function Providers({ children }: { children: React.ReactNode }) {
       <AptosWalletAdapterProvider
         autoConnect={true}
         dappConfig={{ 
-          network: (process.env.NEXT_PUBLIC_APP_NETWORK as any) ?? "testnet",
+          network: (process.env.NEXT_PUBLIC_APP_NETWORK as Network) ?? Network.TESTNET,
           aptosApiKeys: {
             [process.env.NEXT_PUBLIC_APP_NETWORK as string]: process.env.NEXT_PUBLIC_APTOS_API_KEY
           }
         }}
-        onError={(error: any) => {
+        onError={(error: Error) => {
           console.error("Wallet error:", error);
         }}
       >

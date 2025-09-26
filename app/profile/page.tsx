@@ -31,7 +31,7 @@ interface NFTData {
 
 interface Transaction {
   hash: string;
-  timestamp?: string;
+  timestamp?: number;
   type?: string;
 }
 
@@ -115,7 +115,7 @@ const Profile: React.FC = () => {
 
           const aptResource = resources.find(r => r.type === "0x1::coin::CoinStore<0x1::aptos_coin::AptosCoin>");
           if (aptResource) {
-            const balance = (aptResource.data as any).coin.value;
+            const balance = (aptResource.data as { coin: { value: string } }).coin.value;
             setBalance(balance);
           }
         } catch (error) {
@@ -190,7 +190,7 @@ const Profile: React.FC = () => {
 
         const formattedTransactions = transactions.map(txn => ({
           hash: txn.hash,
-          timestamp: txn.timestamp,
+          timestamp: ('timestamp' in txn ? new Date((txn as { timestamp: string }).timestamp).getTime() : Date.now()),
           type: 'transaction'
         }));
 
@@ -219,7 +219,7 @@ const Profile: React.FC = () => {
 
   const handleCopyAddress = () => {
     if (account?.address) {
-      navigator.clipboard.writeText(account.address);
+      navigator.clipboard.writeText(account.address.toStringLong());
       setCopied(true);
       toast({
         title: "Success",

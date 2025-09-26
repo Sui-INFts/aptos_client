@@ -1,6 +1,6 @@
-import { Aptos, AptosConfig } from "@aptos-labs/ts-sdk";
+import { Aptos, AptosConfig, Network } from "@aptos-labs/ts-sdk";
 
-const NETWORK = (process.env.NEXT_PUBLIC_APP_NETWORK as any) ?? "testnet";
+const NETWORK = (process.env.NEXT_PUBLIC_APP_NETWORK as Network) ?? Network.TESTNET;
 const APTOS_API_KEY = process.env.NEXT_PUBLIC_APTOS_API_KEY;
 
 const aptos = new Aptos(new AptosConfig({ 

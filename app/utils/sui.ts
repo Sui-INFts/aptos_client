@@ -1,5 +1,5 @@
 // Aptos utilities for INFT Protocol
-import { aptosClient } from './aptosClient';
+// import { aptosClient } from './aptosClient';
 import { getNetworkVariables } from '@/contract';
 
 // Contract address from configuration
@@ -8,9 +8,9 @@ const CONTRACT_ADDRESS = networkVariables.MODULE_ADDRESS;
 
 export const aptos = {
   // Get NFTs owned by the current wallet
-  async getNFTsForWallet(walletAddress: string) {
+  async getNFTsForWallet() {
     try {
-      const client = aptosClient();
+      // const client = aptosClient();
       
       // This is a placeholder implementation
       // You would need to implement the actual NFT fetching logic based on your Aptos smart contract
@@ -26,7 +26,7 @@ export const aptos = {
 
   // Mint a new INFT
   async mintNFT(
-    signer: any, // Aptos wallet signer
+    signer: { signAndSubmitTransaction: (payload: unknown) => Promise<{ hash: string }> }, // Aptos wallet signer
     {
       name,
       description,

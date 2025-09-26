@@ -19,7 +19,7 @@ interface Network {
     tokens: Token[];
   }
 
-interface NetworkCardProps extends Network {}
+type NetworkCardProps = Network;
 
 export const NetworkCard: React.FC<NetworkCardProps> = ({ 
     network, 
