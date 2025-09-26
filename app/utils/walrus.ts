@@ -130,10 +130,7 @@ export const walrus = {
   // Mint a new INFT
   async mintNFT(
     signer: {
-      signAndExecuteTransaction: (input: { transaction: string }) => Promise<{
-        digest: string;
-        effects: { status: { status: string }; transactionDigest: string };
-      }>;
+      signAndSubmitTransaction: (transaction: unknown) => Promise<{ hash: string }>;
     },
     {
       name,
@@ -185,39 +182,35 @@ export const walrus = {
       const privateBlobId = await uploadJson(privateMetadata);
       const privateMetadataUri = `${AGGREGATOR}/v1/blobs/${privateBlobId}`;
 
-      // Create a new transaction block
-      const tx = new TransactionBlock();
-      tx.setGasBudget(10000000);
-
-      // Call the mint_nft function from the smart contract
-      tx.moveCall({
-        target: `${PACKAGE_ID}::inft_core::mint_nft`,
+      // Create transaction payload for Aptos
+      const payload = {
+        type: "entry_function_payload",
+        function: `${PACKAGE_ID}::inft_core::mint_nft`,
+        type_arguments: [],
         arguments: [
-          tx.pure.string(name),
-          tx.pure.string(description),
-          tx.pure.string(imageUrl),
-          tx.pure.string(publicMetadataUri),
-          tx.pure.string(privateMetadataUri),
-          tx.pure.string(ATOMA_MODEL_ID),
+          name,
+          description,
+          imageUrl,
+          publicMetadataUri,
+          privateMetadataUri,
+          ATOMA_MODEL_ID,
         ],
-      });
+      };
 
       // Execute the transaction
-      const result = await signer.signAndExecuteTransaction({
-        transaction: tx.serialize(),
-      });
+      const result = await signer.signAndSubmitTransaction(payload);
 
       console.log("Mint transaction result:", JSON.stringify(result, null, 2));
 
-      // Extract INFT object ID
-      const objectId = result.effects?.transactionDigest;
-      if (!objectId) {
-        throw new Error("No INFT object ID found in transaction result");
+      // Extract transaction hash
+      const transactionHash = result.hash;
+      if (!transactionHash) {
+        throw new Error("No transaction hash found in result");
       }
 
       return {
-        objectId,
-        digest: result.digest,
+        objectId: transactionHash, // Using transaction hash as object ID for Aptos
+        digest: transactionHash,
         imageUrl,
         publicMetadataUri,
         privateMetadataUri,

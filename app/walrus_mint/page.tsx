@@ -6,7 +6,6 @@ import Image from "next/image";
 import { HeroHeader } from "@/components/header";
 import { Button } from "@/components/ui/button";
 import { useWallet } from "@aptos-labs/wallet-adapter-react";
-import { getNetworkVariables } from "@/contract";
 import { toast } from "@/components/ui/use-toast";
 import { walrus } from "../utils/walrus";
 import FooterSection from "@/components/footer";
@@ -22,8 +21,7 @@ interface NFTFormData {
 
 export default function MintNFT() {
   const router = useRouter();
-  const { account } = useWallet();
-  const networkVariables = getNetworkVariables();
+  const { account, signAndSubmitTransaction } = useWallet();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -49,11 +47,19 @@ export default function MintNFT() {
       const file = e.target.files[0];
       // Validate file type and size
       if (!file.type.startsWith("image/")) {
-        toast.error("Please upload an image file (JPEG, PNG, etc.)");
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Please upload an image file (JPEG, PNG, etc.)",
+        });
         return;
       }
       if (file.size > 10 * 1024 * 1024) {
-        toast.error("Image file is too large. Please upload an image smaller than 10MB.");
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Image file is too large. Please upload an image smaller than 10MB.",
+        });
         return;
       }
 
@@ -76,11 +82,19 @@ export default function MintNFT() {
   // Mint NFT on the SUI blockchain
   const mintNFT = async () => {
     if (!account || !formData.file) {
-      toast.error("Please connect your wallet and select an image file");
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Please connect your wallet and select an image file",
+      });
       return;
     }
     if (!formData.name.trim()) {
-      toast.error("Name is required and cannot be empty");
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Name is required and cannot be empty",
+      });
       return;
     }
 
@@ -88,32 +102,16 @@ export default function MintNFT() {
     try {
       const result = await walrus.mintNFT(
         {
-            signAndExecuteTransaction: (input: { transaction: string }) =>
-                new Promise((resolve, reject) => {
-                  signAndExecute(
-                    {
-                      transaction: input.transaction,
-                      chain: networkVariables.CHAIN_ID as `${string}:${string}`,
-                    },
-                    {
-                      onSuccess: (data) => resolve({
-                        digest: data.digest,
-                        effects: {
-                          status: { status: "success" },
-                          transactionDigest: data.digest
-                        }
-                      }),
-                      onError: (error) => reject(error),
-                    }
-                  );
-                }),
+            signAndSubmitTransaction: (payload: unknown) => {
+              return signAndSubmitTransaction(payload as Parameters<typeof signAndSubmitTransaction>[0]);
             },
+        },
         {
           name: formData.name.trim(),
           description: formData.description.trim(),
           image: formData.file,
         //   atomaModelId: "default-model-id"
-          accountAddress: account?.address || ""
+          accountAddress: account?.address?.toString() || ""
         }
       );
 
@@ -127,11 +125,18 @@ export default function MintNFT() {
         atomaModelId: "default-model-id",
       });
 
-      toast.success("INFT minted successfully!");
+      toast({
+        title: "Success",
+        description: "INFT minted successfully!",
+      });
       router.push("/profile");
     } catch (error) {
       console.error("Error minting INFT:", error);
-      toast.error(`Failed to mint INFT: ${error instanceof Error ? error.message : "Unknown error occurred"}`);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: `Failed to mint INFT: ${error instanceof Error ? error.message : "Unknown error occurred"}`,
+      });
     } finally {
       setIsLoading(false);
     }
@@ -309,7 +314,11 @@ export default function MintNFT() {
                       width={200}
                       height={200}
                       className="rounded-md"
-                      onError={() => toast.error("Failed to load INFT image")}
+                      onError={() => toast({
+                        variant: "destructive",
+                        title: "Error",
+                        description: "Failed to load INFT image",
+                      })}
                     />
                   </div>
                 </div>
