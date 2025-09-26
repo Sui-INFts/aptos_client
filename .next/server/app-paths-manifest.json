@@ -1,13 +1,6 @@
 {
   "/_not-found/page": "app/_not-found/page.js",
-  "/api/chat/route": "app/api/chat/route.js",
-  "/favicon.ico/route": "app/favicon.ico/route.js",
-  "/comingsoon/page": "app/comingsoon/page.js",
-  "/create/page": "app/create/page.js",
   "/dashboard/page": "app/dashboard/page.js",
-  "/interaction/page": "app/interaction/page.js",
-  "/page": "app/page.js",
-  "/io/page": "app/io/page.js",
-  "/profile/page": "app/profile/page.js",
-  "/walrus_mint/page": "app/walrus_mint/page.js"
+  "/favicon.ico/route": "app/favicon.ico/route.js",
+  "/page": "app/page.js"
 }

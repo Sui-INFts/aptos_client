@@ -13,12 +13,13 @@ export const HeroSection = (): React.ReactElement => {
           Exciting
         </div>
 
-        <h1 className="relative w-fit bg-[linear-gradient(180deg,rgba(255,255,255,1)_0%,rgba(153,153,153,1)_100%)] [-webkit-background-clip:text] bg-clip-text [-webkit-text-fill-color:transparent] [text-fill-color:transparent] [font-family:'Montserrat',Helvetica] font-bold text-transparent text-[28px] sm:text-[36px] md:text-[48px] lg:text-[56px] text-center tracking-[-0.56px] md:tracking-[-1.12px] leading-[1.2] max-w-4xl px-4">
-          Intelligent NFTs that Learn, Evolve and Remember You
+        <h1 className="relative w-fit bg-[linear-gradient(180deg,rgba(255,255,255,1)_0%,rgba(153,153,153,1)_100%)] [-webkit-background-clip:text] bg-clip-text [-webkit-text-fill-color:transparent] [text-fill-color:transparent] [font-family:'Montserrat',Helvetica] font-bold text-transparent text-[20px] sm:text-[24px] md:text-[32px] lg:text-[36px] text-center tracking-[-0.4px] md:tracking-[-0.72px] leading-[1.2] max-w-4xl px-4">
+        Your INFT Credit Profile
+        AI-powered identity card that evolves with your Web3 activity
         </h1>
 
         <p className="relative w-fit [font-family:'Montserrat',Helvetica] font-medium text-[#ffffffa3] text-sm md:text-base text-center tracking-[-0.28px] md:tracking-[-0.32px] leading-6 md:leading-8 max-w-2xl px-4">
-          Unlocking a new era of personalized digital assets on Sui.
+          Unlocking a new era of Credit Profiling on Aptos.
         </p>
 
         <Button className="px-6 py-3 bg-white rounded-[44px] text-[#3e4654] hover:bg-white/90 hover:scale-105 transition-all duration-300 animate-bounce-subtle">

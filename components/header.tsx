@@ -17,8 +17,8 @@ const navItems = [
   },
   {
     icon: "/figmaAssets/bold---astronomy---star-circle-4.svg",
-    text: "All NFTs",
-    href: "/comingsoon",
+    text: "Dashboard",
+    href: "/dashboard",
     active: false,
   },
 ];
@@ -29,7 +29,7 @@ export const HeroHeader = () => {
   const router = useRouter();
 
   const handleProfile = () => {
-    router.push("/profile");
+    router.push("/dashboard");
   };
 
   // Generate random gradient colors when component mounts
