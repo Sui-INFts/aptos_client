@@ -1,5 +1,5 @@
 import { Check } from "lucide-react";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 
@@ -8,7 +8,7 @@ export const UseCasesSection = (): React.ReactElement => {
   const [isLoaded, setIsLoaded] = useState(false);
 
   // Define use case data for mapping
-  const useCases = [
+  const useCases = useMemo(() => [
     {
       id: 1,
       title: "Credit & Lending",
@@ -86,7 +86,7 @@ export const UseCasesSection = (): React.ReactElement => {
         },
       ],
     },
-  ];
+  ], []);
 
   useEffect(() => {
     setIsLoaded(true);
@@ -97,7 +97,7 @@ export const UseCasesSection = (): React.ReactElement => {
         setVisibleCards(prev => new Set([...prev, index]));
       }, index * 200);
     });
-  }, []);
+  }, [useCases]);
 
   const FloatingElement = ({ className, delay = 0 }: { className: string; delay?: number }) => (
     <div 

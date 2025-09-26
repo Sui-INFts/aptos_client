@@ -4,6 +4,7 @@ import {
   ChevronRightIcon,
 } from "lucide-react";
 import React from "react";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -61,10 +62,12 @@ export const FeaturedCollectionSection = (): React.ReactElement => {
               <CarouselItem key={collection.id} className="basis-1/4 pl-0">
                 <Card className="border-none">
                   <CardContent className="flex flex-col items-start p-0">
-                    <img
+                    <Image
                       className="w-full h-[352px] object-cover"
                       alt={`${collection.title} artwork`}
                       src={collection.image}
+                      width={400}
+                      height={352}
                     />
                     <div className="flex flex-col items-center w-full gap-2.5 py-6 px-4">
                       <h3 className="font-['Montserrat',Helvetica] font-semibold text-white text-[28px] text-center leading-7 whitespace-nowrap">

@@ -3,12 +3,9 @@
 import React from "react";
 import Image from "next/image";
 import { Separator } from "@/components/ui/separator";
-import { FeaturedCollectionSection } from "./sections/FeaturedCollectionSection";
 import { FooterSection } from "./sections/FooterSection";
 import { HeroSection } from "./sections/HeroSection";
 // import { HowItWorksSection } from "./sections/HowItWorksSection";
-import { IntroductionSection } from "./sections/IntroductionSection";
-import { MainContentSection } from "./sections/MainContentSection";
 // import { MeetTheTeamSection } from "./sections/MeetTheTeamSection";
 import { UseCasesSection } from "./sections/UseCasesSection";
 import { HeroHeader } from "@/components/header";

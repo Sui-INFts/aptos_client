@@ -1,4 +1,5 @@
 import React from "react";
+import Image from "next/image";
 import { Separator } from "@/components/ui/separator";
 
 export const FooterSection = (): React.ReactElement => {
@@ -19,10 +20,12 @@ export const FooterSection = (): React.ReactElement => {
       <div className="flex justify-between w-full">
         {/* Logo and description */}
         <div className="flex flex-col w-80 items-start gap-5">
-          <img
+          <Image
             className="w-10 h-[39px] object-cover"
             alt="Logo"
             src="/figmaAssets/logo-1.png"
+            width={40}
+            height={39}
           />
           <p className="font-['Montserrat',Helvetica] font-medium text-[#ffffffa3] text-sm tracking-[-0.28px] leading-[22.4px]">
             Intellgient NFTs that Learn. Evolve and remember you on Sui
@@ -60,7 +63,7 @@ export const FooterSection = (): React.ReactElement => {
             <h3 className="font-['Montserrat',Helvetica] font-semibold text-white text-sm tracking-[-0.28px] leading-[22.4px]">
               Connect
             </h3>
-            <img alt="Social Links" src="/figmaAssets/links.svg" />
+            <Image alt="Social Links" src="/figmaAssets/links.svg" width={200} height={40} />
           </div>
         </div>
       </div>

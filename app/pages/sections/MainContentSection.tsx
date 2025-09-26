@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 
 export const MainContentSection = (): React.ReactElement => {
@@ -7,7 +7,7 @@ export const MainContentSection = (): React.ReactElement => {
   const sectionRef = useRef(null);
 
   // Data for the feature cards with enhanced styling
-  const featureCards = [
+  const featureCards = useMemo(() => [
     {
       icon: "🎨", // Using emoji as fallback for SVG
       title: "Mint",
@@ -29,7 +29,7 @@ export const MainContentSection = (): React.ReactElement => {
       gradient: "from-green-400 to-emerald-500",
       glowColor: "green",
     },
-  ];
+  ], []);
 
   useEffect(() => {
     setIsLoaded(true);
@@ -58,7 +58,7 @@ export const MainContentSection = (): React.ReactElement => {
     }
 
     return () => observer.disconnect();
-  }, []);
+  }, [featureCards]);
 
   const FloatingElement = ({ 
     className, 

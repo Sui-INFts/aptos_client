@@ -1,4 +1,5 @@
 import React from 'react';
+import Image from 'next/image';
 import { Card, CardContent, } from '@/components/ui/card';
 // import { Button } from '@/components/ui/button';
 import { Activity, Heart, Image as ImageIcon } from 'lucide-react';
@@ -128,10 +129,12 @@ export function NFTGrid({ nfts, isLoading, onFavoriteToggle }: NFTGridProps) {
         >
           <div className="aspect-square relative bg-zinc-800/50">
             {!hasFailed ? (
-              <img
+              <Image
                 src={imageUrl}
                 alt={nft.name || 'NFT'}
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                width={300}
+                height={300}
                 onError={() => handleImageError(imageUrl)}
               />
             ) : (
