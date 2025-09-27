@@ -21,7 +21,7 @@ The INFT Protocol bridges these gaps by introducing **Intelligent NFTs (INFTs):*
 ## What is INFT Protocol?
 
 INFT Protocol is an AI-integrated NFT framework that enables:
-* Dynamic NFTs (INFTs): NFTs that evolve based on user behavior and data.
+* Intelligent NFTs (INFTs): NFTs that evolve based on user behavior and data.
 * Decentralized Credit Scoring: Combining Web2 and Web3 data to generate a verifiable, on-chain credit score.
 * AI Integration (iO Model): AI agents that analyze behavior, assign scores, and customize the evolution of each INFT.
 * Secure Storage: All data is encrypted and stored on decentralized storage networks.
