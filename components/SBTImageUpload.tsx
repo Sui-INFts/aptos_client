@@ -2,19 +2,18 @@
 
 import { useState, useRef } from "react";
 import { useWallet } from "@aptos-labs/wallet-adapter-react";
-import { useWalletClient } from "@aptos-labs/wallet-adapter-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
-import { getAptosClient, getContractConfig, formatFunctionCall, CreditScoreData } from "@/lib/aptos-utils";
+import { getAptosClient, getContractConfig, formatFunctionCall, CreditScoreDataOrNull } from "@/lib/aptos-utils";
 import { createNoditClient, validateImageFile, generateSBTImageMetadata } from "@/lib/nodit-utils";
 import { Loader2, Upload, Image as ImageIcon, Shield, X } from "lucide-react";
+import { AccountAddress } from "@aptos-labs/ts-sdk";
 
 export function SBTImageUpload() {
   const { account, signTransaction } = useWallet();
-  const { client: walletClient } = useWalletClient();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -29,7 +28,7 @@ export function SBTImageUpload() {
   const noditClient = createNoditClient();
 
   // Fetch user's credit score data
-  const { data: creditScoreData, isLoading } = useQuery<CreditScoreData>({
+  const { data: creditScoreData, isLoading } = useQuery<CreditScoreDataOrNull>({
     queryKey: ["creditScore", account?.address],
     queryFn: async () => {
       if (!account) return null;
@@ -37,10 +36,14 @@ export function SBTImageUpload() {
       const client = getAptosClient();
       
       try {
+        // Convert account address to proper format
+        const userAddress = AccountAddress.from(account.address);
+        const addressString = userAddress.toString();
+        
         const hasMinted = await client.view({
           payload: {
-            function: formatFunctionCall("has_minted", [account.address]).function,
-            functionArguments: [account.address],
+            function: `${contractConfig.moduleAddress}::${contractConfig.moduleName}::has_minted`,
+            functionArguments: [addressString],
           },
         });
 
@@ -55,8 +58,8 @@ export function SBTImageUpload() {
 
         const userSbt = await client.view({
           payload: {
-            function: formatFunctionCall("get_user_sbt", [account.address]).function,
-            functionArguments: [account.address],
+            function: `${contractConfig.moduleAddress}::${contractConfig.moduleName}::get_user_sbt`,
+            functionArguments: [addressString],
           },
         });
 
@@ -65,21 +68,21 @@ export function SBTImageUpload() {
           
           const score = await client.view({
             payload: {
-              function: formatFunctionCall("get_score", [tokenObj]).function,
+              function: `${contractConfig.moduleAddress}::${contractConfig.moduleName}::get_score`,
               functionArguments: [tokenObj],
             },
           });
 
           const lastUpdated = await client.view({
             payload: {
-              function: formatFunctionCall("get_last_updated", [tokenObj]).function,
+              function: `${contractConfig.moduleAddress}::${contractConfig.moduleName}::get_last_updated`,
               functionArguments: [tokenObj],
             },
           });
 
           const mintTimestamp = await client.view({
             payload: {
-              function: formatFunctionCall("get_mint_timestamp", [tokenObj]).function,
+              function: `${contractConfig.moduleAddress}::${contractConfig.moduleName}::get_mint_timestamp`,
               functionArguments: [tokenObj],
             },
           });
@@ -158,9 +161,13 @@ export function SBTImageUpload() {
       
       if (result.success && result.url) {
         setUploadedImageUrl(result.url);
+        const isFallback = result.url.startsWith('data:');
         toast({
           title: "Success!",
-          description: "Image uploaded to Nodit successfully",
+          description: isFallback 
+            ? "Image uploaded using fallback storage (Nodit unavailable)" 
+            : "Image uploaded to Nodit successfully",
+          variant: isFallback ? "default" : "default",
         });
       } else {
         throw new Error(result.error || 'Upload failed');
@@ -178,7 +185,7 @@ export function SBTImageUpload() {
   };
 
   const handleMintSBT = async () => {
-    if (!account || !walletClient) {
+    if (!account || !signTransaction) {
       toast({
         title: "Error",
         description: "Please connect your wallet first",
@@ -189,21 +196,95 @@ export function SBTImageUpload() {
 
     setIsMinting(true);
     try {
-      const transaction = await getAptosClient().transaction.build.simple({
+      const client = getAptosClient();
+      const contractConfig = getContractConfig();
+      
+      console.log("Contract config:", contractConfig);
+      console.log("Account address:", account.address);
+      console.log("Account address type:", typeof account.address);
+      console.log("Account address toString:", account.address.toString());
+      
+      // First, verify the contract exists by calling a view function
+      try {
+        const admin = await client.view({
+          payload: {
+            function: `${contractConfig.moduleAddress}::${contractConfig.moduleName}::get_admin`,
+            functionArguments: [],
+          },
+        });
+        console.log("Contract is accessible, admin:", admin);
+      } catch (viewError) {
+        console.error("Contract view function failed:", viewError);
+        throw new Error(`Contract not accessible: ${viewError instanceof Error ? viewError.message : 'Unknown error'}`);
+      }
+      
+      // Build transaction - user pays the fee
+      console.log("Building transaction with:", {
         sender: account.address,
-        data: formatFunctionCall("mint_sbt"),
-        options: {
-          maxGasAmount: 10_000,
-        },
+        function: `${contractConfig.moduleAddress}::${contractConfig.moduleName}::mint_sbt`,
+        functionArguments: [],
       });
 
-      const committedTransaction = await walletClient.signAndSubmitTransaction({
+      let transaction;
+      try {
+        transaction = await client.transaction.build.simple({
+          sender: account.address.toString(),
+          data: {
+            function: `${contractConfig.moduleAddress}::${contractConfig.moduleName}::mint_sbt`,
+            functionArguments: [],
+          },
+          options: {
+            maxGasAmount: 10_000,
+          },
+        });
+        console.log("Generated transaction:", transaction);
+        console.log("Transaction type:", typeof transaction);
+        console.log("Transaction keys:", transaction ? Object.keys(transaction) : "transaction is null/undefined");
+      } catch (buildError) {
+        console.error("Transaction build error:", buildError);
+        throw new Error(`Failed to build transaction: ${buildError instanceof Error ? buildError.message : 'Unknown error'}`);
+      }
+
+      if (!transaction) {
+        throw new Error("Failed to generate transaction - transaction is null/undefined");
+      }
+
+      // Sign transaction
+      console.log("Signing transaction...");
+      const signedTransaction = await signTransaction({
+        transactionOrPayload: transaction,
+      });
+
+      console.log("Signed transaction:", signedTransaction);
+      console.log("Signed transaction type:", typeof signedTransaction);
+      console.log("Signed transaction keys:", signedTransaction ? Object.keys(signedTransaction) : "signedTransaction is null/undefined");
+
+      // Check if signedTransaction has the authenticator property
+      if (!signedTransaction || typeof signedTransaction !== 'object') {
+        throw new Error("Invalid signed transaction structure");
+      }
+
+      // Submit transaction manually using the authenticator
+      console.log("Submitting transaction...");
+      const committedTransaction = await client.transaction.submit.simple({
         transaction,
+        senderAuthenticator: (signedTransaction as any).authenticator || signedTransaction,
       });
 
-      await getAptosClient().waitForTransaction({
+      console.log("Committed transaction:", committedTransaction);
+      console.log("Transaction hash:", committedTransaction?.hash);
+
+      // Check if we have a valid hash
+      if (!committedTransaction?.hash) {
+        throw new Error("Transaction hash is undefined. Transaction may not have been submitted successfully.");
+      }
+
+      // Wait for transaction completion
+      const executedTransaction = await client.waitForTransaction({
         transactionHash: committedTransaction.hash,
       });
+
+      console.log("Executed transaction:", executedTransaction);
 
       toast({
         title: "Success!",
@@ -216,7 +297,7 @@ export function SBTImageUpload() {
       console.error("Error minting SBT:", error);
       toast({
         title: "Error",
-        description: "Failed to mint Credit Score SBT",
+        description: `Failed to mint Credit Score SBT: ${error instanceof Error ? error.message : 'Unknown error'}`,
         variant: "destructive",
       });
     } finally {
@@ -345,15 +426,35 @@ export function SBTImageUpload() {
 
           {/* Upload Status */}
           {uploadedImageUrl && (
-            <div className="p-4 bg-green-50 dark:bg-green-950 rounded-lg">
+            <div className={`p-4 rounded-lg ${
+              uploadedImageUrl.startsWith('data:') 
+                ? 'bg-yellow-50 dark:bg-yellow-950' 
+                : 'bg-green-50 dark:bg-green-950'
+            }`}>
               <div className="flex items-center gap-2 mb-2">
-                <Shield className="h-4 w-4 text-green-600" />
-                <span className="text-sm font-medium text-green-800 dark:text-green-200">
-                  Image Uploaded Successfully
+                <Shield className={`h-4 w-4 ${
+                  uploadedImageUrl.startsWith('data:') 
+                    ? 'text-yellow-600' 
+                    : 'text-green-600'
+                }`} />
+                <span className={`text-sm font-medium ${
+                  uploadedImageUrl.startsWith('data:') 
+                    ? 'text-yellow-800 dark:text-yellow-200' 
+                    : 'text-green-800 dark:text-green-200'
+                }`}>
+                  {uploadedImageUrl.startsWith('data:') 
+                    ? 'Image Stored Locally (Nodit Unavailable)' 
+                    : 'Image Uploaded Successfully'}
                 </span>
               </div>
-              <div className="text-xs text-green-700 dark:text-green-300 break-all">
-                {uploadedImageUrl}
+              <div className={`text-xs break-all ${
+                uploadedImageUrl.startsWith('data:') 
+                  ? 'text-yellow-700 dark:text-yellow-300' 
+                  : 'text-green-700 dark:text-green-300'
+              }`}>
+                {uploadedImageUrl.startsWith('data:') 
+                  ? 'Using local storage fallback' 
+                  : uploadedImageUrl}
               </div>
             </div>
           )}

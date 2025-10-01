@@ -3,7 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { getAptosClient, getContractConfig, formatFunctionCall, ContractInfo } from "@/lib/aptos-utils";
+import { getAptosClient, getContractConfig, formatFunctionCall, type ContractInfo } from "@/lib/aptos-utils";
 import { Loader2, Settings, Users, Coins, Shield } from "lucide-react";
 
 export function ContractInfo() {
@@ -18,7 +18,7 @@ export function ContractInfo() {
         // Get admin
         const admin = await client.view({
           payload: {
-            function: formatFunctionCall("get_admin").function,
+            function: `${contractConfig.moduleAddress}::${contractConfig.moduleName}::get_admin`,
             functionArguments: [],
           },
         });
@@ -26,7 +26,7 @@ export function ContractInfo() {
         // Get pending admin
         const pendingAdmin = await client.view({
           payload: {
-            function: formatFunctionCall("get_pending_admin").function,
+            function: `${contractConfig.moduleAddress}::${contractConfig.moduleName}::get_pending_admin`,
             functionArguments: [],
           },
         });
@@ -34,7 +34,7 @@ export function ContractInfo() {
         // Get mint fee collector
         const mintFeeCollector = await client.view({
           payload: {
-            function: formatFunctionCall("get_mint_fee_collector").function,
+            function: `${contractConfig.moduleAddress}::${contractConfig.moduleName}::get_mint_fee_collector`,
             functionArguments: [],
           },
         });
@@ -42,7 +42,7 @@ export function ContractInfo() {
         // Get mint fee
         const mintFee = await client.view({
           payload: {
-            function: formatFunctionCall("get_mint_fee").function,
+            function: `${contractConfig.moduleAddress}::${contractConfig.moduleName}::get_mint_fee`,
             functionArguments: [],
           },
         });
@@ -50,7 +50,7 @@ export function ContractInfo() {
         // Get total minted
         const totalMinted = await client.view({
           payload: {
-            function: formatFunctionCall("get_total_minted").function,
+            function: `${contractConfig.moduleAddress}::${contractConfig.moduleName}::get_total_minted`,
             functionArguments: [],
           },
         });

@@ -5,15 +5,18 @@ import { getNetworkVariables } from "@/contract";
 
 export const NETWORK = (process.env.NEXT_PUBLIC_APP_NETWORK as Network) || "testnet";
 
-export const getAptosClient = () =>
-  new Aptos(
+export const getAptosClient = () => {
+  const apiKey = process.env.NEXT_PUBLIC_APTOS_API_KEY || "aptoslabs_ZEqHVtzhURY_HgUFmpfaYUykA2NcoxejSkvKnSm5p9pUq";
+  
+  return new Aptos(
     new AptosConfig({
       network: NETWORK,
       clientConfig: {
-        API_KEY: process.env.NEXT_PUBLIC_APTOS_API_KEY!,
+        API_KEY: apiKey,
       },
     })
   );
+};
 
 export const getSurfClient = () =>
   createSurfClient(getAptosClient()).useABI(INFTS_CREDIT_SCORE_ABI);
@@ -45,6 +48,8 @@ export interface CreditScoreData {
   hasMinted: boolean;
   tokenObject?: string;
 }
+
+export type CreditScoreDataOrNull = CreditScoreData | null;
 
 export interface ContractInfo {
   admin: string;

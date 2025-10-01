@@ -23,8 +23,8 @@ const navItems = [
   },
   {
     icon: "/figmaAssets/bold---astronomy---star-circle-4.svg",
-    text: "Credit Score",
-    href: "/credit-score",
+    text: "My SBTs",
+    href: "/my-sbts",
     active: false,
   },
   {

@@ -32,21 +32,21 @@ export default function TestContractPage() {
       // Test basic contract info
       const admin = await client.view({
         payload: {
-          function: formatFunctionCall("get_admin").function,
+          function: `${contractConfig.moduleAddress}::${contractConfig.moduleName}::get_admin`,
           functionArguments: [],
         },
       });
 
       const mintFee = await client.view({
         payload: {
-          function: formatFunctionCall("get_mint_fee").function,
+          function: `${contractConfig.moduleAddress}::${contractConfig.moduleName}::get_mint_fee`,
           functionArguments: [],
         },
       });
 
       const totalMinted = await client.view({
         payload: {
-          function: formatFunctionCall("get_total_minted").function,
+          function: `${contractConfig.moduleAddress}::${contractConfig.moduleName}::get_total_minted`,
           functionArguments: [],
         },
       });

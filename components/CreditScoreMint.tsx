@@ -2,18 +2,17 @@
 
 import { useState } from "react";
 import { useWallet } from "@aptos-labs/wallet-adapter-react";
-import { useWalletClient } from "@aptos-labs/wallet-adapter-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
-import { getAptosClient, getContractConfig, formatFunctionCall, CreditScoreData } from "@/lib/aptos-utils";
+import { getAptosClient, getContractConfig, formatFunctionCall, CreditScoreDataOrNull } from "@/lib/aptos-utils";
 import { Loader2, Coins, Shield, Clock } from "lucide-react";
+import { AccountAddress } from "@aptos-labs/ts-sdk";
 
 export function CreditScoreMint() {
   const { account, signTransaction } = useWallet();
-  const { client: walletClient } = useWalletClient();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isMinting, setIsMinting] = useState(false);
@@ -21,7 +20,7 @@ export function CreditScoreMint() {
   const contractConfig = getContractConfig();
 
   // Fetch user's credit score data
-  const { data: creditScoreData, isLoading } = useQuery<CreditScoreData>({
+  const { data: creditScoreData, isLoading } = useQuery<CreditScoreDataOrNull>({
     queryKey: ["creditScore", account?.address],
     queryFn: async () => {
       if (!account) return null;
@@ -29,11 +28,15 @@ export function CreditScoreMint() {
       const client = getAptosClient();
       
       try {
+        // Convert account address to proper format
+        const userAddress = AccountAddress.from(account.address);
+        const addressString = userAddress.toString();
+        
         // Check if user has minted
         const hasMinted = await client.view({
           payload: {
-            function: formatFunctionCall("has_minted", [account.address]).function,
-            functionArguments: [account.address],
+            function: `${contractConfig.moduleAddress}::${contractConfig.moduleName}::has_minted`,
+            functionArguments: [addressString],
           },
         });
 
@@ -49,8 +52,8 @@ export function CreditScoreMint() {
         // Get user's SBT object
         const userSbt = await client.view({
           payload: {
-            function: formatFunctionCall("get_user_sbt", [account.address]).function,
-            functionArguments: [account.address],
+            function: `${contractConfig.moduleAddress}::${contractConfig.moduleName}::get_user_sbt`,
+            functionArguments: [addressString],
           },
         });
 
@@ -60,7 +63,7 @@ export function CreditScoreMint() {
           // Get score
           const score = await client.view({
             payload: {
-              function: formatFunctionCall("get_score", [tokenObj]).function,
+              function: `${contractConfig.moduleAddress}::${contractConfig.moduleName}::get_score`,
               functionArguments: [tokenObj],
             },
           });
@@ -68,7 +71,7 @@ export function CreditScoreMint() {
           // Get last updated
           const lastUpdated = await client.view({
             payload: {
-              function: formatFunctionCall("get_last_updated", [tokenObj]).function,
+              function: `${contractConfig.moduleAddress}::${contractConfig.moduleName}::get_last_updated`,
               functionArguments: [tokenObj],
             },
           });
@@ -76,7 +79,7 @@ export function CreditScoreMint() {
           // Get mint timestamp
           const mintTimestamp = await client.view({
             payload: {
-              function: formatFunctionCall("get_mint_timestamp", [tokenObj]).function,
+              function: `${contractConfig.moduleAddress}::${contractConfig.moduleName}::get_mint_timestamp`,
               functionArguments: [tokenObj],
             },
           });
@@ -110,7 +113,7 @@ export function CreditScoreMint() {
   });
 
   const handleMintSBT = async () => {
-    if (!account || !walletClient) {
+    if (!account || !signTransaction) {
       toast({
         title: "Error",
         description: "Please connect your wallet first",
@@ -122,21 +125,46 @@ export function CreditScoreMint() {
     setIsMinting(true);
 
     try {
-      const transaction = await getAptosClient().transaction.build.simple({
-        sender: account.address,
-        data: formatFunctionCall("mint_sbt"),
+      const client = getAptosClient();
+      const contractConfig = getContractConfig();
+      
+      // Build transaction - user pays the fee
+      const transaction = await client.transaction.build.simple({
+        sender: account.address.toString(),
+        data: {
+          function: `${contractConfig.moduleAddress}::${contractConfig.moduleName}::mint_sbt`,
+          functionArguments: [],
+        },
         options: {
           maxGasAmount: 10_000,
         },
       });
 
-      const committedTransaction = await walletClient.signAndSubmitTransaction({
-        transaction,
+      console.log("Generated transaction:", transaction);
+
+      if (!transaction) {
+        throw new Error("Failed to generate transaction");
+      }
+
+      // Sign transaction
+      const signedTransaction = await signTransaction({
+        transactionOrPayload: transaction,
       });
 
-      await getAptosClient().waitForTransaction({
+      // Submit transaction manually using the authenticator
+      const committedTransaction = await client.transaction.submit.simple({
+        transaction,
+        senderAuthenticator: (signedTransaction as any).authenticator || signedTransaction,
+      });
+
+      console.log("Committed transaction:", committedTransaction);
+
+      // Wait for transaction completion
+      const executedTransaction = await client.waitForTransaction({
         transactionHash: committedTransaction.hash,
       });
+
+      console.log("Executed transaction:", executedTransaction);
 
       toast({
         title: "Success!",
@@ -149,7 +177,7 @@ export function CreditScoreMint() {
       console.error("Error minting SBT:", error);
       toast({
         title: "Error",
-        description: "Failed to mint Credit Score SBT",
+        description: `Failed to mint Credit Score SBT: ${error instanceof Error ? error.message : 'Unknown error'}`,
         variant: "destructive",
       });
     } finally {
