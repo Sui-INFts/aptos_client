@@ -27,6 +27,12 @@ const navItems = [
     href: "/credit-score",
     active: false,
   },
+  {
+    icon: "/figmaAssets/bold---astronomy---star-circle-4.svg",
+    text: "Mint SBT",
+    href: "/sbt-mint",
+    active: false,
+  },
 ];
 
 export const HeroHeader = () => {
