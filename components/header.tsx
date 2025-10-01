@@ -21,6 +21,12 @@ const navItems = [
     href: "/dashboard",
     active: false,
   },
+  {
+    icon: "/figmaAssets/bold---astronomy---star-circle-4.svg",
+    text: "Credit Score",
+    href: "/credit-score",
+    active: false,
+  },
 ];
 
 export const HeroHeader = () => {
