@@ -61,7 +61,7 @@ NEXT_PUBLIC_NODIT_API_KEY=your_nodit_key
 ### Getting Started
 1. **Clone the repo** - Get the code
 2. **Install dependencies** - `pnpm install`
-3. **Set up environment** - Copy `.env.example` to `.env.local`
+3. **Set up environment** - Copy `.env.example` to `.env`
 4. **Start development** - `pnpm run dev`
 
 ### Common Tasks

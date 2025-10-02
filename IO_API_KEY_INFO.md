@@ -12,13 +12,13 @@ So you want to use the AI features in my project? Here's everything you need to 
 
 ## Setup (The Configuration Part)
 
-Add your key to `.env.local`:
+Add your key to `.env`:
 
 ```bash
 NEXT_PUBLIC_IO_INTELLIGENCE_API_KEY=your_key_here
 ```
 
-**Important**: Make sure the file is named `.env.local` (not `.env`) and that it's in your project root.
+**Important**: Make sure the file is named `.env` and that it's in your project root.
 
 ## Current Key (Development)
 
@@ -93,7 +93,7 @@ const handleIOError = (error: any) => {
 ## Best Practices (What I Learned)
 
 ### 1. Keep Your Key Secure
-- **Don't commit it to git** - Use `.env.local` and add it to `.gitignore`
+- **Don't commit it to git** - Use `.env` and add it to `.gitignore`
 - **Don't share it publicly** - Keep it private
 - **Rotate it regularly** - Generate new keys periodically
 
