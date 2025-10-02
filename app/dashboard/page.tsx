@@ -4,12 +4,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { HeroHeader } from "@/components/header";
 import { useWallet } from "@aptos-labs/wallet-adapter-react";
-import { Wallet, Clock, Activity, Shield, AlertCircle, CheckCircle, Zap, RefreshCw, Image, Coins } from 'lucide-react';
+import { Wallet, Clock, Activity, Shield, AlertCircle, CheckCircle, Zap, RefreshCw, Image, Coins, Sparkles, ArrowRightLeft } from 'lucide-react';
 import { CreditScoreRing } from "./components/creditScoreRing";
 import { MetricCard } from "./components/metricCard";
 import { CreditFactorItem } from "./components/creditFactorItem";
 import { toast } from "@/components/ui/use-toast";
 import { aptosClient } from "@/app/utils/aptosClient";
+import { AIInsightsPanel } from "@/components/AIInsightsPanel";
+import { DeFiActionChat } from "@/components/DeFiActionChat";
 
 type IconComponent = React.ComponentType<{ className?: string; }>;
 
@@ -61,6 +63,9 @@ const Dashboard: React.FC = () => {
   const [activeHoldingsTab, setActiveHoldingsTab] = useState<'Tokens' | 'NFTs'>('Tokens');
   const [isLoading, setIsLoading] = useState(false);
   const [aptPrice, setAptPrice] = useState<number>(0);
+  const [showAIInsights, setShowAIInsights] = useState(false);
+  const [showDeFiActions, setShowDeFiActions] = useState(false);
+  const [showKanaSwap, setShowKanaSwap] = useState(false);
   
   // Real on-chain data state
   const [onChainData, setOnChainData] = useState<OnChainData>({
@@ -422,14 +427,44 @@ const Dashboard: React.FC = () => {
       <HeroHeader />
       
       {/* Main Content */}
-      <div className="w-5/6 mx-auto pt-32 pb-16">
+      <div className="w-full md:w-5/6 mx-auto px-4 md:px-0 pt-24 md:pt-32 pb-16">
         {/* Header Section */}
-        <div className="flex items-center justify-between mb-12">
-          <div className="text-center flex-1">
-            <h1 className="text-4xl font-bold text-white mb-4">Your INFT Credit Profile</h1>
-            <p className="text-zinc-400 text-lg">AI-powered identity card that evolves with your Web3 activity</p>
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 mb-8 md:mb-12">
+          <div className="text-center md:text-left flex-1">
+            <h1 className="text-2xl md:text-4xl font-bold text-white mb-2 md:mb-4">Your INFT Credit Profile</h1>
+            <p className="text-zinc-400 text-sm md:text-lg">AI-powered identity card that evolves with your Web3 activity</p>
           </div>
-          <div className="flex items-center gap-4">
+          
+          {/* Desktop Action Buttons */}
+          <div className="hidden md:flex items-center gap-4">
+            <Button 
+              variant="default" 
+              size="sm" 
+              onClick={() => setShowKanaSwap(!showKanaSwap)}
+              disabled={!connected}
+              className="bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 text-white font-semibold shadow-lg hover:shadow-xl transition-all border-0"
+            >
+              <ArrowRightLeft className="h-4 w-4 mr-2" />
+              🔥 Swap Tokens
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => setShowDeFiActions(!showDeFiActions)}
+              className="border-green-700 text-green-700 hover:bg-green-700 hover:text-white"
+            >
+              <ArrowRightLeft className="h-4 w-4 mr-2" />
+              {showDeFiActions ? 'Hide' : 'Show'} DeFi Actions
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => setShowAIInsights(!showAIInsights)}
+              className="border-zinc-700"
+            >
+              <Sparkles className="h-4 w-4 mr-2" />
+              {showAIInsights ? 'Hide' : 'Show'} AI Insights
+            </Button>
             <Button 
               variant="outline" 
               size="sm" 
@@ -441,17 +476,59 @@ const Dashboard: React.FC = () => {
               Refresh
             </Button>
           </div>
+
+          {/* Mobile Action Buttons */}
+          <div className="grid grid-cols-2 md:hidden gap-2">
+            <Button 
+              variant="default" 
+              size="sm" 
+              onClick={() => setShowKanaSwap(!showKanaSwap)}
+              disabled={!connected}
+              className="bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 text-white font-semibold shadow-lg hover:shadow-xl transition-all border-0"
+            >
+              <ArrowRightLeft className="h-4 w-4 mr-1" />
+              Swap
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => setShowDeFiActions(!showDeFiActions)}
+              className="border-green-700 text-green-700 hover:bg-green-700 hover:text-white"
+            >
+              <ArrowRightLeft className="h-4 w-4 mr-1" />
+              DeFi
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => setShowAIInsights(!showAIInsights)}
+              className="border-zinc-700"
+            >
+              <Sparkles className="h-4 w-4 mr-1" />
+              AI
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={fetchDashboardData}
+              disabled={isLoading}
+              className="border-zinc-700"
+            >
+              <RefreshCw className={`h-4 w-4 mr-1 ${isLoading ? 'animate-spin' : ''}`} />
+              Refresh
+            </Button>
+          </div>
         </div>
 
         {/* Tabs */}
-        <div className="w-full border-b border-zinc-800/50 mb-8">
-          <div className="flex flex-wrap gap-1 mb-4 pb-2 w-1/3">
+        <div className="w-full border-b border-zinc-800/50 mb-6 md:mb-8">
+          <div className="flex flex-wrap gap-2 mb-4 pb-2 w-full md:w-1/3">
             {tabOptions.map((tab) => (
               <Button 
                 key={tab} 
                 variant="ghost" 
                 onClick={() => setActiveTab(tab)}
-                className={`flex-1 min-w-[120px] rounded-lg px-6 py-3 text-base font-medium justify-center transition-all duration-200 ${
+                className={`flex-1 min-w-[100px] md:min-w-[120px] rounded-lg px-4 md:px-6 py-2 md:py-3 text-sm md:text-base font-medium justify-center transition-all duration-200 ${
                   activeTab === tab 
                     ? 'text-white bg-zinc-800/70 shadow-lg border border-zinc-700/50' 
                     : 'text-zinc-400 hover:bg-zinc-800/50 hover:text-white'
@@ -467,12 +544,12 @@ const Dashboard: React.FC = () => {
         {activeTab === 'On Chain' ? (
           <div className="space-y-8">
             {/* Credit Score Overview */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-8">
               {/* Main Credit Score */}
               <div className="lg:col-span-1">
                 <Card className="bg-zinc-900/50 border-zinc-800/50">
                   <CardHeader className="text-center">
-                    <CardTitle className="text-xl text-white">Overall Credit Score</CardTitle>
+                    <CardTitle className="text-lg md:text-xl text-white">Overall Credit Score</CardTitle>
                   </CardHeader>
                   <CardContent className="text-center">
                     <CreditScoreRing 
@@ -519,7 +596,7 @@ const Dashboard: React.FC = () => {
               </div>
 
               {/* Key Metrics */}
-              <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                 <MetricCard
                   title="Address Age"
                   value={`${onChainData.addressAge} days`}
@@ -745,6 +822,95 @@ const Dashboard: React.FC = () => {
                 </CardContent>
               </Card>
             </div>
+
+            {/* Kana Labs Swap Widget */}
+            {showKanaSwap && connected && (
+              <div className="mt-6 md:mt-8">
+                <Card className="border-2 border-orange-400/30 bg-gradient-to-br from-orange-950/20 to-pink-950/20">
+                  <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div>
+                      <CardTitle className="flex items-center gap-2 text-lg md:text-2xl">
+                        <ArrowRightLeft className="h-5 w-5 md:h-6 md:w-6 text-orange-400" />
+                        <span className="bg-gradient-to-r from-orange-400 to-pink-400 bg-clip-text text-transparent">
+                          Kana Labs Swap
+                        </span>
+                      </CardTitle>
+                      <CardDescription className="mt-2 text-sm md:text-base">
+                        Swap tokens on Aptos with best rates via DEX aggregation
+                      </CardDescription>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowKanaSwap(false)}
+                      className="border-orange-400/50 text-orange-400 hover:bg-orange-400/10 w-full sm:w-auto"
+                    >
+                      Close
+                    </Button>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="rounded-lg overflow-hidden border-2 border-orange-400/20 shadow-2xl">
+                      <iframe
+                        src={`https://app.kanalabs.io/swap?wallet=${account?.address.toString()}`}
+                        className="w-full h-[500px] md:h-[650px] bg-white dark:bg-zinc-950"
+                        title="Kana Labs Swap Widget"
+                        allow="clipboard-write; payment"
+                        sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox"
+                      />
+                    </div>
+                    
+                    <div className="mt-4 p-4 bg-blue-950/20 border border-blue-400/30 rounded-lg">
+                      <div className="flex items-start gap-3">
+                        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center">
+                          <svg className="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                        </div>
+                        <div className="flex-1 text-sm text-blue-200">
+                          <p className="font-semibold mb-1">Powered by Kana Labs DEX Aggregator</p>
+                          <p className="text-blue-300/80">
+                            Kana Labs aggregates liquidity from multiple Aptos DEXs (Liquidswap, PancakeSwap, Thala) 
+                            to provide you with the best swap rates. Your wallet is automatically connected for seamless trading.
+                          </p>
+                          <a 
+                            href="https://docs.kanalabs.io/" 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 mt-2 text-blue-400 hover:text-blue-300 transition-colors"
+                          >
+                            Learn more about Kana Labs
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                            </svg>
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+
+            {/* DeFi Actions Chat */}
+            {showDeFiActions && (
+              <div className="mt-8">
+                <DeFiActionChat 
+                  creditScore={onChainData.overallScore}
+                  userAddress={account?.address.toString()}
+                />
+              </div>
+            )}
+
+            {/* AI Insights Panel */}
+            {showAIInsights && (
+              <div className="mt-8">
+                <AIInsightsPanel 
+                  creditScore={onChainData.overallScore}
+                  userAddress={account?.address.toString()}
+                  recentActivity={`${onChainData.transactions} transactions, ${onChainData.totalBalance} portfolio value, ${onChainData.addressAge} days account age`}
+                />
+              </div>
+            )}
           </div>
         ) : (
           // Off Chain Tab

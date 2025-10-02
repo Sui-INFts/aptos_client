@@ -1,165 +1,238 @@
-# INFTs Credit Score Protocol Integration
+# Credit Score Smart Contract Integration
 
-This document explains how the `aptos_client` Next.js application integrates with the deployed `aptos_sm` smart contract.
+This document covers how I integrated the INFTs credit score smart contract with the frontend.
 
 ## Contract Overview
 
-The `aptos_sm` contract implements a Credit Score Soulbound Token (SBT) system on Aptos with the following features:
+The smart contract is written in Move and deployed on Aptos testnet. It handles:
+- Minting credit score SBTs (Soulbound Tokens)
+- Storing user scores on-chain
+- Updating scores (admin only)
+- View functions for reading data
 
-- **Soulbound Tokens**: Non-transferable tokens that represent credit scores
-- **Admin Management**: Admin can update scores and manage the contract
-- **Mint Fee System**: Configurable mint fees (currently 0 APT)
-- **Credit Scoring**: Scores range from 0-1000
+## Contract Details
 
-## Contract Address
+**Module Address**: `0x[your_module_address]`
+**Module Name**: `infts_credit_score`
 
-- **Module Address**: `43e8211c2cfad783147c6f8ce36a4b561f88d9bfaf37f834e1d1c75e563e2cfb`
-- **Module Name**: `infts_credit_score`
-- **Network**: Testnet
+### Key Functions
 
-## Integration Files
+**Entry Functions** (write operations):
+- `mint_sbt()` - Mints a new credit score SBT
+- `update_score(user_addr, new_score)` - Updates user score (admin)
 
-### 1. ABI Definition
-- **File**: `contract/abi/infts_credit_score_abi.ts`
-- **Purpose**: Defines the contract's Application Binary Interface
-- **Contains**: All entry functions, view functions, events, and structs
-
-### 2. Contract Configuration
-- **File**: `contract/contracts_testnet.ts`
-- **Purpose**: Stores contract addresses and configuration
-- **Updated**: Now points to the deployed `aptos_sm` contract
-
-### 3. Utility Functions
-- **File**: `lib/aptos-utils.ts`
-- **Purpose**: Helper functions for contract interactions
-- **Features**:
-  - Aptos client setup
-  - Surf client for ABI-based interactions
-  - Function call formatting
-  - Type definitions
-
-### 4. React Components
-
-#### CreditScoreMint Component
-- **File**: `components/CreditScoreMint.tsx`
-- **Purpose**: Allows users to mint their Credit Score SBT
-- **Features**:
-  - Check if user has already minted
-  - Display current credit score
-  - Mint new SBT with gasless transactions
-  - Real-time data updates
-
-#### ContractInfo Component
-- **File**: `components/ContractInfo.tsx`
-- **Purpose**: Displays contract information and statistics
-- **Features**:
-  - Admin address
-  - Mint fee information
-  - Total tokens minted
-  - Contract configuration
-
-### 5. Pages
-
-#### Credit Score Page
-- **File**: `app/credit-score/page.tsx`
-- **Purpose**: Main page for Credit Score SBT interactions
-- **Features**: Integrates both CreditScoreMint and ContractInfo components
-
-#### Test Contract Page
-- **File**: `app/test-contract/page.tsx`
-- **Purpose**: Test page to verify contract connectivity
-- **Features**: Basic contract function calls and configuration display
-
-## Key Functions
-
-### Entry Functions (Write Operations)
-- `mint_sbt()` - Mint a new Credit Score SBT
-- `update_score()` - Update a user's credit score (admin only)
-- `set_pending_admin()` - Set pending admin (admin only)
-- `accept_admin()` - Accept admin role
-- `update_mint_fee()` - Update mint fee (admin only)
-
-### View Functions (Read Operations)
-- `get_admin()` - Get current admin address
+**View Functions** (read operations):
+- `has_minted(user_addr)` - Check if user has SBT
+- `get_user_sbt(user_addr)` - Get user's SBT token object
+- `get_score(token_obj)` - Get score from token
+- `get_admin()` - Get admin address
 - `get_mint_fee()` - Get current mint fee
-- `get_total_minted()` - Get total number of minted SBTs
-- `has_minted(address)` - Check if user has minted
-- `get_user_score(address)` - Get user's credit score
-- `get_user_sbt(address)` - Get user's SBT object
 
-## Usage
+## Frontend Integration
 
-### 1. Navigate to Credit Score Page
+### Configuration
+
+I created a config file for contract details:
+
+```typescript
+// contract/contracts_testnet.ts
+
+export const INFTS_CREDIT_SCORE = {
+  moduleAddress: "0x...",
+  moduleName: "infts_credit_score",
+  maxCreditScore: 1000,
+  defaultMintFee: 0,
+};
 ```
-http://localhost:3000/credit-score
+
+### Aptos Client Setup
+
+```typescript
+// lib/aptos-utils.ts
+
+export const getAptosClient = () => {
+  const apiKey = process.env.NEXT_PUBLIC_APTOS_API_KEY || 'fallback_key';
+  
+  return new Aptos(
+    new AptosConfig({
+      network: NETWORK,
+      clientConfig: { API_KEY: apiKey },
+    })
+  );
+};
 ```
 
-### 2. Connect Wallet
-- Use the wallet selector in the header
-- Supported wallets: Petra, Nightly, etc.
+### Reading Data
 
-### 3. Mint Credit Score SBT
-- Click "Mint Credit Score SBT" button
-- Sign the transaction
-- Wait for confirmation
+To check if a user has minted:
 
-### 4. View Contract Information
-- See current contract stats
-- View admin information
-- Check mint fees
-
-## Environment Variables
-
-Make sure to set these environment variables:
-
-```env
-NEXT_PUBLIC_APP_NETWORK=testnet
-NEXT_PUBLIC_APTOS_API_KEY=your_aptos_api_key
+```typescript
+const client = getAptosClient();
+const hasMinted = await client.view({
+  payload: {
+    function: `${config.moduleAddress}::${config.moduleName}::has_minted`,
+    functionArguments: [userAddress],
+  },
+});
 ```
+
+To get user's score:
+
+```typescript
+// First get the token object
+const userSbt = await client.view({
+  payload: {
+    function: `${config.moduleAddress}::${config.moduleName}::get_user_sbt`,
+    functionArguments: [userAddress],
+  },
+});
+
+// Then get the score
+const score = await client.view({
+  payload: {
+    function: `${config.moduleAddress}::${config.moduleName}::get_score`,
+    functionArguments: [String(userSbt[0])],
+  },
+});
+```
+
+### Writing Data (Minting)
+
+Minting requires wallet signature:
+
+```typescript
+const handleMintSBT = async () => {
+  const client = getAptosClient();
+  
+  // Build transaction
+  const transaction = await client.transaction.build.simple({
+    sender: account.address.toString(),
+    data: {
+      function: `${config.moduleAddress}::${config.moduleName}::mint_sbt`,
+      functionArguments: [],
+    },
+    options: { maxGasAmount: 10_000 },
+  });
+  
+  // Sign transaction
+  const signedTx = await signTransaction({ 
+    transactionOrPayload: transaction 
+  });
+  
+  // Submit transaction
+  const committedTx = await client.transaction.submit.simple({
+    transaction,
+    senderAuthenticator: signedTx.authenticator,
+  });
+  
+  // Wait for confirmation
+  await client.waitForTransaction({ 
+    transactionHash: committedTx.hash 
+  });
+};
+```
+
+## Type Handling
+
+### Move Option Type
+
+The contract returns `Option<Object<Token>>` for `get_user_sbt`. I handle it like this:
+
+```typescript
+const optionValue = userSbt[0];
+let tokenObj = null;
+
+if (optionValue && typeof optionValue === 'object') {
+  if ('vec' in optionValue && Array.isArray(optionValue.vec)) {
+    tokenObj = optionValue.vec[0];
+  } else {
+    tokenObj = optionValue;
+  }
+}
+```
+
+### Address Conversion
+
+Aptos SDK expects string addresses:
+
+```typescript
+// Convert AccountAddress to string
+const addressString = AccountAddress.from(account.address).toString();
+
+// Use in view calls
+await client.view({
+  payload: {
+    function: `...::has_minted`,
+    functionArguments: [addressString],
+  },
+});
+```
+
+## Components
+
+### CreditScoreMint
+
+Main component for minting and viewing SBTs:
+
+```typescript
+export function CreditScoreMint() {
+  const { account, signTransaction } = useWallet();
+  
+  const { data: creditScoreData } = useQuery({
+    queryKey: ["creditScore", account?.address],
+    queryFn: async () => {
+      // Fetch SBT data
+    },
+  });
+  
+  const handleMintSBT = async () => {
+    // Mint logic
+  };
+  
+  return (
+    <Card>
+      {creditScoreData?.hasMinted ? (
+        <div>Score: {creditScoreData.score}</div>
+      ) : (
+        <Button onClick={handleMintSBT}>Mint SBT</Button>
+      )}
+    </Card>
+  );
+}
+```
+
+## Error Handling
+
+Common issues and solutions:
+
+**Type mismatch errors**:
+- Convert addresses to strings
+- Convert token objects to strings for view calls
+
+**Transaction failures**:
+- Check gas amount
+- Verify function arguments
+- Ensure wallet is connected
+
+**View function errors**:
+- Confirm contract is deployed
+- Check function name spelling
+- Verify argument types
 
 ## Testing
 
-### Test Contract Connection
-1. Navigate to `/test-contract`
-2. Connect your wallet
-3. Click "Test Contract" to verify connectivity
-4. View contract information
+To test the integration:
 
-### Manual Testing
-1. Mint an SBT
-2. Check if it appears in your wallet
-3. Verify the score is 0 (default)
-4. Check contract stats update
-
-## Architecture
-
-The integration follows this pattern:
-
-1. **Frontend** → **Aptos SDK** → **Blockchain**
-2. **React Query** for data caching and real-time updates
-3. **Surf Client** for ABI-based contract interactions
-4. **Wallet Adapter** for wallet connections
+1. Go to `/test-contract` page
+2. Click "Test Contract Connection"
+3. Should show contract info (admin, mint fee, total minted)
+4. Try minting an SBT
+5. Check "My SBTs" page to verify
 
 ## Next Steps
 
-1. **Admin Functions**: Add admin-only components for score updates
-2. **Batch Operations**: Implement batch score updates
-3. **Event Listening**: Add real-time event monitoring
-4. **Analytics**: Add usage statistics and charts
-5. **Mobile Optimization**: Improve mobile experience
-
-## Troubleshooting
-
-### Common Issues
-
-1. **Contract Not Found**: Verify the contract address is correct
-2. **Transaction Failed**: Check gas limits and wallet balance
-3. **View Function Errors**: Ensure the contract is deployed and accessible
-4. **Wallet Connection**: Make sure wallet is connected to testnet
-
-### Debug Steps
-
-1. Check browser console for errors
-2. Verify environment variables
-3. Test contract connection on `/test-contract`
-4. Check Aptos Explorer for transaction status
+Potential improvements:
+- Add score update functionality (for admins)
+- Implement score history tracking
+- Create admin dashboard
+- Add batch minting support

@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { getAptosClient, getContractConfig } from "@/lib/aptos-utils";
 import { Loader2, Shield, Clock, TrendingUp, Calendar, Award } from "lucide-react";
 import { AccountAddress } from "@aptos-labs/ts-sdk";
+import { AIInsightsPanel } from "@/components/AIInsightsPanel";
 
 interface SBTDetails {
   tokenObject: string;
@@ -351,6 +352,15 @@ export default function MySBTsPage() {
                 </div>
               </CardContent>
             </Card>
+          </div>
+
+          {/* AI Insights Panel */}
+          <div className="mt-8">
+            <AIInsightsPanel 
+              creditScore={sbtData.score}
+              userAddress={account?.address.toString()}
+              recentActivity={`User has minted SBT with score ${sbtData.score}. Last updated: ${formatDate(sbtData.lastUpdated)}`}
+            />
           </div>
 
           {/* Additional Actions */}
