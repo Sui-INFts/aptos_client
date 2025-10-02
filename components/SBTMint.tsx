@@ -10,7 +10,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { getAptosClient, getContractConfig, CreditScoreDataOrNull } from "@/lib/aptos-utils";
 import { createNoditClient, generateSBTImageMetadata } from "@/lib/nodit-utils";
 import { Loader2, Shield, CheckCircle, ExternalLink } from "lucide-react";
-import { AccountAddress } from "@aptos-labs/ts-sdk";
+import { formatAddressForContract } from "@/lib/address-utils";
 import sbtImageSrc from "@/assets/image/SBT.png";
 
 export function SBTMint() {
@@ -35,8 +35,7 @@ export function SBTMint() {
       
       try {
         // Convert account address to proper format
-        const userAddress = AccountAddress.from(account.address);
-        const addressString = userAddress.toString();
+        const addressString = formatAddressForContract(account.address);
         
         const hasMinted = await client.view({
           payload: {

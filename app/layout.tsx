@@ -24,6 +24,11 @@ const montserrat = Montserrat({
 export const metadata: Metadata = {
   title: "INFTS",
   description: "Intelligent NFTs Platform",
+  icons: {
+    icon: "/favicon.ico",
+    shortcut: "/favicon.ico",
+    apple: "/favicon.ico",
+  },
 };
 
 export default function RootLayout({
