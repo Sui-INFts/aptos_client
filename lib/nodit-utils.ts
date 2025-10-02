@@ -88,7 +88,7 @@ export class NoditClient {
    * @param metadata - Optional metadata
    * @returns Fallback upload response
    */
-  private createFallbackUpload(file: File): NoditUploadResponse {
+  private createFallbackUpload(file: File): NoditUploadResponse | Promise<NoditUploadResponse> {
     try {
       // Create a data URL for the image
       const reader = new FileReader();

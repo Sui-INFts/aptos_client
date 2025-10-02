@@ -1,5 +1,21 @@
 {
+  "/_not-found/page": "app/_not-found/page.js",
+  "/api/chat/route": "app/api/chat/route.js",
   "/favicon.ico/route": "app/favicon.ico/route.js",
+  "/comingsoon/page": "app/comingsoon/page.js",
+  "/create/page": "app/create/page.js",
+  "/dashboard/page": "app/dashboard/page.js",
+  "/io/page": "app/io/page.js",
+  "/interaction/page": "app/interaction/page.js",
   "/my-sbts/page": "app/my-sbts/page.js",
-  "/page": "app/page.js"
+  "/credit-score/page": "app/credit-score/page.js",
+  "/page": "app/page.js",
+  "/test-contract-simple/page": "app/test-contract-simple/page.js",
+  "/profile/page": "app/profile/page.js",
+  "/test-contract/page": "app/test-contract/page.js",
+  "/sbt-mint/page": "app/sbt-mint/page.js",
+  "/test-simple-mint/page": "app/test-simple-mint/page.js",
+  "/test-transaction/page": "app/test-transaction/page.js",
+  "/walrus_mint/page": "app/walrus_mint/page.js",
+  "/test-upload/page": "app/test-upload/page.js"
 }
