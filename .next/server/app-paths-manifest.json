@@ -1,10 +1,5 @@
 {
-  "/_not-found/page": "app/_not-found/page.js",
-  "/credit-score/page": "app/credit-score/page.js",
-  "/dashboard/page": "app/dashboard/page.js",
   "/favicon.ico/route": "app/favicon.ico/route.js",
   "/my-sbts/page": "app/my-sbts/page.js",
-  "/page": "app/page.js",
-  "/sbt-mint/page": "app/sbt-mint/page.js",
-  "/test-transaction/page": "app/test-transaction/page.js"
+  "/page": "app/page.js"
 }

@@ -25,12 +25,12 @@ export class NoditClient {
    * @param metadata - Optional metadata for the file
    * @returns Promise with upload response
    */
-  async uploadImage(file: File, metadata?: Record<string, any>): Promise<NoditUploadResponse> {
+  async uploadImage(file: File, metadata?: Record<string, unknown>): Promise<NoditUploadResponse> {
     try {
       // Check if Nodit is configured
       if (!this.config.apiKey || !this.config.projectId) {
         console.warn('Nodit not configured, using fallback storage');
-        return this.createFallbackUpload(file, metadata);
+        return this.createFallbackUpload(file);
       }
 
       const formData = new FormData();
@@ -47,8 +47,6 @@ export class NoditClient {
         `${this.config.baseUrl}/api/upload`,
         `${this.config.baseUrl}/files/upload`
       ];
-
-      let lastError: Error | null = null;
 
       for (const endpoint of endpoints) {
         try {
@@ -70,18 +68,17 @@ export class NoditClient {
             };
           }
         } catch (error) {
-          lastError = error as Error;
           console.warn(`Failed to upload to ${endpoint}:`, error);
         }
       }
 
       // If all endpoints fail, use fallback
       console.warn('All Nodit endpoints failed, using fallback storage');
-      return this.createFallbackUpload(file, metadata);
+      return this.createFallbackUpload(file);
 
     } catch (error) {
       console.error('Nodit upload error:', error);
-      return this.createFallbackUpload(file, metadata);
+      return this.createFallbackUpload(file);
     }
   }
 
@@ -91,7 +88,7 @@ export class NoditClient {
    * @param metadata - Optional metadata
    * @returns Fallback upload response
    */
-  private createFallbackUpload(file: File, metadata?: Record<string, any>): NoditUploadResponse {
+  private createFallbackUpload(file: File): NoditUploadResponse {
     try {
       // Create a data URL for the image
       const reader = new FileReader();
@@ -108,7 +105,7 @@ export class NoditClient {
         };
         reader.readAsDataURL(file);
       });
-    } catch (error) {
+    } catch {
       return {
         success: false,
         error: 'Fallback upload failed',
@@ -122,7 +119,7 @@ export class NoditClient {
    * @param metadata - Optional metadata for each file
    * @returns Promise with upload responses
    */
-  async uploadImages(files: File[], metadata?: Record<string, any>[]): Promise<NoditUploadResponse[]> {
+  async uploadImages(files: File[], metadata?: Record<string, unknown>[]): Promise<NoditUploadResponse[]> {
     const uploadPromises = files.map((file, index) => 
       this.uploadImage(file, metadata?.[index])
     );
@@ -164,7 +161,7 @@ export class NoditClient {
    * @param fileId - The file ID
    * @returns Promise with file information
    */
-  async getFileInfo(fileId: string): Promise<any> {
+  async getFileInfo(fileId: string): Promise<unknown> {
     try {
       const response = await fetch(`${this.config.baseUrl}/api/v1/files/${fileId}`, {
         method: 'GET',

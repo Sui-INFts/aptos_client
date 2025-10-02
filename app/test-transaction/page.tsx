@@ -8,11 +8,25 @@ import { getAptosClient, getContractConfig } from "@/lib/aptos-utils";
 import { useToast } from "@/components/ui/use-toast";
 import { Loader2, CheckCircle, XCircle } from "lucide-react";
 
+interface TestResults {
+  success: boolean;
+  message: string;
+  contractAccessible?: boolean;
+  transaction?: {
+    hasRawTransaction: boolean;
+    hasBcsToBytes: boolean;
+    type: string;
+    keys: string[];
+  };
+  error?: string;
+  details?: string;
+}
+
 export default function TestTransactionPage() {
-  const { account, signTransaction } = useWallet();
+  const { account } = useWallet();
   const { toast } = useToast();
   const [isTesting, setIsTesting] = useState(false);
-  const [testResults, setTestResults] = useState<any>(null);
+  const [testResults, setTestResults] = useState<TestResults | null>(null);
 
   const testTransactionBuilding = async () => {
     if (!account) {
@@ -194,10 +208,14 @@ export default function TestTransactionPage() {
                   {testResults.success ? (
                     <div>
                       <div><strong>Contract Accessible:</strong> {testResults.contractAccessible ? 'Yes' : 'No'}</div>
-                      <div><strong>Transaction Type:</strong> {testResults.transaction.type}</div>
-                      <div><strong>Has rawTransaction:</strong> {testResults.transaction.hasRawTransaction ? 'Yes' : 'No'}</div>
-                      <div><strong>Has bcsToBytes:</strong> {testResults.transaction.hasBcsToBytes ? 'Yes' : 'No'}</div>
-                      <div><strong>Keys:</strong> {testResults.transaction.keys.join(', ')}</div>
+                      {testResults.transaction && (
+                        <>
+                          <div><strong>Transaction Type:</strong> {testResults.transaction.type}</div>
+                          <div><strong>Has rawTransaction:</strong> {testResults.transaction.hasRawTransaction ? 'Yes' : 'No'}</div>
+                          <div><strong>Has bcsToBytes:</strong> {testResults.transaction.hasBcsToBytes ? 'Yes' : 'No'}</div>
+                          <div><strong>Keys:</strong> {testResults.transaction.keys.join(', ')}</div>
+                        </>
+                      )}
                     </div>
                   ) : (
                     <div>

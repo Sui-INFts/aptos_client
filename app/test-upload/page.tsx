@@ -7,11 +7,19 @@ import { createNoditClient, validateImageFile } from "@/lib/nodit-utils";
 import { useToast } from "@/components/ui/use-toast";
 import { Upload, CheckCircle, AlertCircle } from "lucide-react";
 
+interface UploadResult {
+  success: boolean;
+  url?: string;
+  fileId?: string;
+  error?: string;
+  storage?: string;
+}
+
 export default function TestUploadPage() {
   const { toast } = useToast();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
-  const [uploadResult, setUploadResult] = useState<any>(null);
+  const [uploadResult, setUploadResult] = useState<UploadResult | null>(null);
 
   const noditClient = createNoditClient();
 

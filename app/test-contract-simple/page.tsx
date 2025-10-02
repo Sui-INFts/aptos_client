@@ -8,11 +8,20 @@ import { getAptosClient, getContractConfig } from "@/lib/aptos-utils";
 import { useToast } from "@/components/ui/use-toast";
 import { Loader2, CheckCircle, XCircle } from "lucide-react";
 
+interface TestResult {
+  success: boolean;
+  message: string;
+  accountInfo?: unknown;
+  moduleInfo?: unknown;
+  admin?: unknown;
+  error?: string;
+}
+
 export default function TestContractSimplePage() {
   const { account } = useWallet();
   const { toast } = useToast();
   const [isTesting, setIsTesting] = useState(false);
-  const [testResults, setTestResults] = useState<any>(null);
+  const [testResults, setTestResults] = useState<TestResult | null>(null);
 
   const testContractExists = async () => {
     if (!account) {

@@ -219,7 +219,7 @@ export default function MySBTsPage() {
             <Shield className="h-16 w-16 text-muted-foreground mb-4" />
             <h3 className="text-xl font-semibold mb-2">No SBTs Found</h3>
             <p className="text-muted-foreground text-center mb-6">
-              You haven't minted any Credit Score SBTs yet
+              You haven&apos;t minted any Credit Score SBTs yet
             </p>
             <a
               href="/sbt-mint"
@@ -263,7 +263,7 @@ export default function MySBTsPage() {
                         {sbtData.score}
                       </div>
                       <div className="text-sm text-muted-foreground mt-2">
-                        out of {contractConfig.maxCreditScore}
+                        out of {Number(contractConfig.maxCreditScore)}
                       </div>
                       <div className="mt-4 w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
                         <div
@@ -276,7 +276,7 @@ export default function MySBTsPage() {
                               ? "bg-yellow-600"
                               : "bg-red-600"
                           }`}
-                          style={{ width: `${(sbtData.score / contractConfig.maxCreditScore) * 100}%` }}
+                          style={{ width: `${(sbtData.score / Number(contractConfig.maxCreditScore)) * 100}%` }}
                         />
                       </div>
                     </div>

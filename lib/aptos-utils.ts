@@ -32,7 +32,7 @@ export const getContractConfig = () => {
 };
 
 // Helper function to format function calls
-export const formatFunctionCall = (functionName: string, args: any[] = []) => {
+export const formatFunctionCall = (functionName: string, args: unknown[] = []) => {
   const config = getContractConfig();
   return {
     function: `${config.moduleAddress}::${config.moduleName}::${functionName}` as `${string}::${string}::${string}`,

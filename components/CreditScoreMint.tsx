@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
-import { getAptosClient, getContractConfig, formatFunctionCall, CreditScoreDataOrNull } from "@/lib/aptos-utils";
+import { getAptosClient, getContractConfig, CreditScoreDataOrNull } from "@/lib/aptos-utils";
 import { Loader2, Coins, Shield, Clock } from "lucide-react";
 import { AccountAddress } from "@aptos-labs/ts-sdk";
 
@@ -89,7 +89,7 @@ export function CreditScoreMint() {
             lastUpdated: Number(lastUpdated[0]),
             mintTimestamp: Number(mintTimestamp[0]),
             hasMinted: true,
-            tokenObject: tokenObj,
+            tokenObject: String(tokenObj),
           };
         }
 
@@ -154,7 +154,7 @@ export function CreditScoreMint() {
       // Submit transaction manually using the authenticator
       const committedTransaction = await client.transaction.submit.simple({
         transaction,
-        senderAuthenticator: (signedTransaction as any).authenticator || signedTransaction,
+        senderAuthenticator: (signedTransaction as { authenticator?: unknown }).authenticator || signedTransaction,
       });
 
       console.log("Committed transaction:", committedTransaction);
@@ -244,10 +244,10 @@ export function CreditScoreMint() {
           <div className="space-y-4">
             <div className="text-center space-y-2">
               <p className="text-sm text-muted-foreground">
-                You haven't minted your Credit Score SBT yet
+                You haven&apos;t minted your Credit Score SBT yet
               </p>
               <p className="text-xs text-muted-foreground">
-                Mint fee: {contractConfig.defaultMintFee} APT
+                Mint fee: {Number(contractConfig.defaultMintFee)} APT
               </p>
             </div>
             

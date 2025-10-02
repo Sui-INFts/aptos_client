@@ -4,14 +4,20 @@ import { useState } from "react";
 import { useWallet } from "@aptos-labs/wallet-adapter-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { getAptosClient, getContractConfig, formatFunctionCall } from "@/lib/aptos-utils";
+import { getAptosClient, getContractConfig } from "@/lib/aptos-utils";
 import { useToast } from "@/components/ui/use-toast";
+
+interface ContractInfo {
+  admin: unknown;
+  mintFee: number;
+  totalMinted: number;
+}
 
 export default function TestContractPage() {
   const { account } = useWallet();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  const [contractInfo, setContractInfo] = useState<any>(null);
+  const [contractInfo, setContractInfo] = useState<ContractInfo | null>(null);
 
   const contractConfig = getContractConfig();
 
@@ -32,21 +38,21 @@ export default function TestContractPage() {
       // Test basic contract info
       const admin = await client.view({
         payload: {
-          function: `${contractConfig.moduleAddress}::${contractConfig.moduleName}::get_admin`,
+          function: `${contractConfig.moduleAddress}::${contractConfig.moduleName}::get_admin` as `${string}::${string}::${string}`,
           functionArguments: [],
         },
       });
 
       const mintFee = await client.view({
         payload: {
-          function: `${contractConfig.moduleAddress}::${contractConfig.moduleName}::get_mint_fee`,
+          function: `${contractConfig.moduleAddress}::${contractConfig.moduleName}::get_mint_fee` as `${string}::${string}::${string}`,
           functionArguments: [],
         },
       });
 
       const totalMinted = await client.view({
         payload: {
-          function: `${contractConfig.moduleAddress}::${contractConfig.moduleName}::get_total_minted`,
+          function: `${contractConfig.moduleAddress}::${contractConfig.moduleName}::get_total_minted` as `${string}::${string}::${string}`,
           functionArguments: [],
         },
       });
@@ -103,11 +109,11 @@ export default function TestContractPage() {
             </div>
             <div className="space-y-2">
               <div className="text-sm font-medium">Max Credit Score:</div>
-              <div className="text-sm">{contractConfig.maxCreditScore}</div>
+              <div className="text-sm">{Number(contractConfig.maxCreditScore)}</div>
             </div>
             <div className="space-y-2">
               <div className="text-sm font-medium">Default Mint Fee:</div>
-              <div className="text-sm">{contractConfig.defaultMintFee} APT</div>
+              <div className="text-sm">{Number(contractConfig.defaultMintFee)} APT</div>
             </div>
           </CardContent>
         </Card>
@@ -132,7 +138,7 @@ export default function TestContractPage() {
               <div className="space-y-2 p-4 bg-muted rounded">
                 <div className="text-sm font-medium">Contract Info:</div>
                 <div className="text-xs space-y-1">
-                  <div>Admin: {contractInfo.admin}</div>
+                  <div>Admin: {String(contractInfo.admin)}</div>
                   <div>Mint Fee: {contractInfo.mintFee} APT</div>
                   <div>Total Minted: {contractInfo.totalMinted}</div>
                 </div>

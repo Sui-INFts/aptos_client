@@ -8,11 +8,19 @@ import { getAptosClient, getContractConfig } from "@/lib/aptos-utils";
 import { useToast } from "@/components/ui/use-toast";
 import { Loader2, CheckCircle, XCircle } from "lucide-react";
 
+interface MintResult {
+  success: boolean;
+  message: string;
+  hash?: string;
+  transactionHash?: string;
+  error?: string;
+}
+
 export default function TestSimpleMintPage() {
   const { account, signTransaction } = useWallet();
   const { toast } = useToast();
   const [isMinting, setIsMinting] = useState(false);
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<MintResult | null>(null);
 
   const handleSimpleMint = async () => {
     if (!account || !signTransaction) {
@@ -57,6 +65,7 @@ export default function TestSimpleMintPage() {
       // Submit transaction manually using the authenticator
       const committedTransaction = await client.transaction.submit.simple({
         transaction,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         senderAuthenticator: (signedTransaction as any).authenticator || signedTransaction,
       });
 
@@ -131,7 +140,7 @@ export default function TestSimpleMintPage() {
             <div className="space-y-2">
               <div className="text-sm font-medium">Sign Transaction Available:</div>
               <div className="text-sm">
-                {signTransaction ? (
+                {typeof signTransaction === 'function' ? (
                   <span className="text-green-600">Yes</span>
                 ) : (
                   <span className="text-red-600">No</span>

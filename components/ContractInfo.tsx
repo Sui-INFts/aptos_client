@@ -3,13 +3,13 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { getAptosClient, getContractConfig, formatFunctionCall, type ContractInfo } from "@/lib/aptos-utils";
+import { getAptosClient, getContractConfig, type ContractInfo as ContractInfoType } from "@/lib/aptos-utils";
 import { Loader2, Settings, Users, Coins, Shield } from "lucide-react";
 
 export function ContractInfo() {
   const contractConfig = getContractConfig();
 
-  const { data: contractInfo, isLoading } = useQuery<ContractInfo>({
+  const { data: contractInfo, isLoading } = useQuery<ContractInfoType>({
     queryKey: ["contractInfo"],
     queryFn: async () => {
       const client = getAptosClient();
@@ -57,7 +57,7 @@ export function ContractInfo() {
 
         return {
           admin: admin[0] as string,
-          pendingAdmin: pendingAdmin[0] ? (pendingAdmin[0] as any).vec?.[0] : undefined,
+          pendingAdmin: pendingAdmin[0] ? (pendingAdmin[0] as { vec?: string[] }).vec?.[0] : undefined,
           mintFeeCollector: mintFeeCollector[0] as string,
           mintFee: Number(mintFee[0]),
           totalMinted: Number(totalMinted[0]),

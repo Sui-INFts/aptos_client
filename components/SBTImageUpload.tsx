@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
-import { getAptosClient, getContractConfig, formatFunctionCall, CreditScoreDataOrNull } from "@/lib/aptos-utils";
+import { getAptosClient, getContractConfig, CreditScoreDataOrNull } from "@/lib/aptos-utils";
 import { createNoditClient, validateImageFile, generateSBTImageMetadata } from "@/lib/nodit-utils";
 import { Loader2, Upload, Image as ImageIcon, Shield, X } from "lucide-react";
 import { AccountAddress } from "@aptos-labs/ts-sdk";
@@ -92,7 +92,7 @@ export function SBTImageUpload() {
             lastUpdated: Number(lastUpdated[0]),
             mintTimestamp: Number(mintTimestamp[0]),
             hasMinted: true,
-            tokenObject: tokenObj,
+            tokenObject: String(tokenObj),
           };
         }
 
@@ -268,7 +268,7 @@ export function SBTImageUpload() {
       console.log("Submitting transaction...");
       const committedTransaction = await client.transaction.submit.simple({
         transaction,
-        senderAuthenticator: (signedTransaction as any).authenticator || signedTransaction,
+        senderAuthenticator: (signedTransaction as { authenticator?: unknown }).authenticator || signedTransaction,
       });
 
       console.log("Committed transaction:", committedTransaction);
