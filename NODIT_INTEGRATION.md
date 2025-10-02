@@ -1,204 +1,382 @@
-# Nodit Integration for SBT Image Storage
+# Nodit Integration for SBT Images (The Storage Solution)
 
-This document explains how to integrate Nodit for storing images when users mint Credit Score SBTs.
+So I needed a way to store SBT images when users mint their credit score tokens, and Nodit seemed like a good choice for decentralized storage. Here's how I integrated it and what I learned.
 
-## Overview
+## What is Nodit?
 
-The integration allows users to:
-1. Upload custom images for their Credit Score SBTs
-2. Store images securely on Nodit
-3. Mint SBTs with image metadata
-4. View and manage their SBTs with associated images
+Nodit is a decentralized storage platform for NFT/SBT metadata and images. I'm using it to store credit score SBT images because it's reliable and doesn't require complex setup.
 
-## Setup Instructions
+## The Setup Process
 
-### 1. Nodit Account Setup
+### Getting Your API Key
 
-1. **Sign up for Nodit**: Visit [https://id.lambda256.io/signup](https://id.lambda256.io/signup)
-2. **Create a project**: Your first project "My First Project" will be created automatically
-3. **Get your API Key**: Navigate to the project overview to find your API Key
-4. **Get your Project ID**: Note down your project ID from the dashboard
+1. Go to [Nodit](https://nodit.io) and sign up
+2. Get your API key from the dashboard
+3. Add it to your environment variables:
 
-### 2. Environment Variables
-
-Create a `.env.local` file in your `aptos_client` directory with the following variables:
-
-```env
-# Aptos Configuration
-NEXT_PUBLIC_APP_NETWORK=testnet
-NEXT_PUBLIC_APTOS_API_KEY=your_aptos_api_key_here
-
-# Nodit Configuration
-NEXT_PUBLIC_NODIT_API_KEY=your_nodit_api_key_here
-NEXT_PUBLIC_NODIT_BASE_URL=https://api.nodit.io
-NEXT_PUBLIC_NODIT_PROJECT_ID=your_nodit_project_id_here
+```bash
+NEXT_PUBLIC_NODIT_API_KEY=your_key_here
 ```
 
-### 3. Install Dependencies
+**Note**: I have a fallback key for development, but you should use your own for production.
 
-The required dependencies are already included in the project:
-- `@aptos-labs/ts-sdk` - For Aptos blockchain interactions
-- `@aptos-labs/wallet-adapter-react` - For wallet connections
+### My Configuration
 
-## Integration Files
-
-### 1. Nodit Utilities (`lib/nodit-utils.ts`)
-
-Contains the `NoditClient` class with methods for:
-- `uploadImage()` - Upload single image to Nodit
-- `uploadImages()` - Upload multiple images in batch
-- `deleteImage()` - Delete image from Nodit
-- `getFileInfo()` - Get file information
-
-### 2. SBT Image Upload Component (`components/SBTImageUpload.tsx`)
-
-Main component that provides:
-- File selection and validation
-- Image preview
-- Upload to Nodit
-- SBT minting with image metadata
-- Progress indicators and error handling
-
-### 3. SBT Mint Page (`app/sbt-mint/page.tsx`)
-
-Dedicated page for the complete SBT minting flow with image upload.
-
-## Usage Flow
-
-### 1. User Experience
-
-1. **Navigate to Mint SBT page**: `/sbt-mint`
-2. **Connect wallet**: Use the wallet selector
-3. **Upload image**: Select and upload an image file
-4. **Upload to Nodit**: Image is stored on Nodit infrastructure
-5. **Mint SBT**: Mint the Credit Score SBT with image metadata
-6. **View result**: SBT is minted and associated with the uploaded image
-
-### 2. Technical Flow
+I created a utility file to handle the Nodit client setup:
 
 ```typescript
-// 1. User selects image file
-const file = event.target.files[0];
+// lib/nodit-utils.ts
 
-// 2. Validate file
-const validation = validateImageFile(file);
+export const getNoditConfig = () => {
+  return {
+    apiKey: process.env.NEXT_PUBLIC_NODIT_API_KEY || 'fallback_key',
+    baseUrl: 'https://api.nodit.io',
+    projectId: process.env.NEXT_PUBLIC_NODIT_PROJECT_ID || '',
+  };
+};
 
-// 3. Upload to Nodit
-const noditClient = createNoditClient();
-const result = await noditClient.uploadImage(file, metadata);
-
-// 4. Mint SBT with image URL
-const transaction = await getAptosClient().transaction.build.simple({
-  sender: account.address,
-  data: formatFunctionCall("mint_sbt"),
-});
+export const createNoditClient = () => {
+  const config = getNoditConfig();
+  return new NoditClient({
+    apiKey: config.apiKey,
+    baseUrl: config.baseUrl,
+  });
+};
 ```
 
-## API Integration
+## The Image Upload Flow
 
-### Nodit API Endpoints
-
-The integration uses these Nodit API endpoints:
-
-- **Upload**: `POST /api/v1/files/upload`
-- **Delete**: `DELETE /api/v1/files/{fileId}`
-- **Get Info**: `GET /api/v1/files/{fileId}`
-
-### Authentication
-
-All API calls include:
-- `Authorization: Bearer {API_KEY}`
-- `X-Project-ID: {PROJECT_ID}`
-
-## Image Metadata
-
-When uploading images, the following metadata is included:
+### 1. User Uploads Image (The Old Way)
 
 ```typescript
-{
-  type: 'credit_score_sbt',
-  userAddress: '0x...',
-  creditScore: 750,
-  timestamp: 1234567890,
-  description: 'Credit Score SBT for 0x... with score 750'
+const handleImageUpload = (event: ChangeEvent<HTMLInputElement>) => {
+  const file = event.target.files?.[0];
+  if (!file) return;
+  
+  if (file.size > 5 * 1024 * 1024) {
+    toast.error('Image must be under 5MB');
+    return;
+  }
+  
+  setSelectedImage(file);
+  setImagePreview(URL.createObjectURL(file));
+};
+```
+
+### 2. Upload to Nodit (The Storage Part)
+
+```typescript
+const uploadToNodit = async (file: File, metadata: any) => {
+  try {
+    const client = createNoditClient();
+    
+    const result = await client.uploadImage(file, {
+      name: `sbt-${Date.now()}`,
+      description: 'INFTs Credit Score SBT',
+      attributes: metadata,
+    });
+    
+    if (result.success) {
+      return result.url;
+    } else {
+      throw new Error('Upload failed');
+    }
+  } catch (error) {
+    console.error('Nodit upload error:', error);
+    throw error;
+  }
+};
+```
+
+### 3. Generate Metadata (The JSON Part)
+
+```typescript
+const generateMetadata = (imageUrl: string, userAddress: string, score: number) => {
+  return {
+    name: 'INFTs Credit Score SBT',
+    description: `Credit Score SBT for ${userAddress}`,
+    image: imageUrl,
+    attributes: [
+      {
+        trait_type: 'Credit Score',
+        value: score,
+      },
+      {
+        trait_type: 'Wallet Address',
+        value: userAddress,
+      },
+      {
+        trait_type: 'Mint Date',
+        value: new Date().toISOString(),
+      },
+    ],
+  };
+};
+```
+
+## The New Approach (Permanent Image)
+
+After dealing with upload issues, I switched to a permanent image approach:
+
+### 1. Static Image Import
+
+```typescript
+import sbtImageSrc from "@/assets/image/SBT.png";
+
+// Use the image
+<img src={sbtImageSrc.src} alt="INFTs SBT Image" />
+```
+
+### 2. Fallback System
+
+```typescript
+const handleUploadImage = async () => {
+  try {
+    // Try to upload to Nodit
+    const result = await uploadToNodit(file, metadata);
+    
+    if (result.success) {
+      setUploadedImageUrl(result.url); // Use Nodit URL
+    } else {
+      setUploadedImageUrl(sbtImageSrc.src); // Fallback to permanent
+    }
+  } catch (error) {
+    setUploadedImageUrl(sbtImageSrc.src); // Fallback to permanent
+  }
+};
+```
+
+### 3. Always Available Minting
+
+```typescript
+const handleMintSBT = async () => {
+  // Ensure we always have an image URL
+  if (!uploadedImageUrl) {
+    setUploadedImageUrl(sbtImageSrc.src);
+  }
+  
+  // Proceed with minting
+  const metadata = generateMetadata(uploadedImageUrl, userAddress, score);
+  await mintSBT(metadata);
+};
+```
+
+## Error Handling (Because Things Break)
+
+I added comprehensive error handling for various failure scenarios:
+
+```typescript
+const handleNoditError = (error: any) => {
+  console.error('Nodit Error:', error);
+  
+  if (error.status === 401) {
+    return 'API key is invalid. Please check your configuration.';
+  } else if (error.status === 413) {
+    return 'Image file is too large. Please use a smaller image.';
+  } else if (error.status === 429) {
+    return 'Rate limit exceeded. Please try again later.';
+  } else if (error.status >= 500) {
+    return 'Nodit service is temporarily unavailable.';
+  } else {
+    return 'An error occurred while uploading your image.';
+  }
+};
+```
+
+## File Validation (Prevent Issues)
+
+I added validation to prevent common issues:
+
+```typescript
+const validateImageFile = (file: File) => {
+  // Check file size
+  if (file.size > 5 * 1024 * 1024) {
+    throw new Error('Image must be under 5MB');
+  }
+  
+  // Check file type
+  if (!file.type.startsWith('image/')) {
+    throw new Error('File must be an image');
+  }
+  
+  // Check file extension
+  const allowedExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
+  const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
+  
+  if (!allowedExtensions.includes(fileExtension)) {
+    throw new Error('Unsupported image format');
+  }
+  
+  return true;
+};
+```
+
+## The Upload Component (The UI Part)
+
+I created a component to handle the upload process:
+
+```typescript
+// components/SBTImageUpload.tsx
+export function SBTImageUpload({ onImageUploaded }: { onImageUploaded: (url: string) => void }) {
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string>('');
+  const [uploading, setUploading] = useState(false);
+  const [uploadedUrl, setUploadedUrl] = useState<string>('');
+
+  const handleFileSelect = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      validateImageFile(file);
+      setSelectedFile(file);
+      setPreviewUrl(URL.createObjectURL(file));
+    } catch (error) {
+      toast.error(error.message);
+    }
+  };
+
+  const handleUpload = async () => {
+    if (!selectedFile) return;
+
+    setUploading(true);
+    try {
+      const url = await uploadToNodit(selectedFile, {});
+      setUploadedUrl(url);
+      onImageUploaded(url);
+      toast.success('Image uploaded successfully!');
+    } catch (error) {
+      toast.error(handleNoditError(error));
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <div className="sbt-image-upload">
+      <input
+        type="file"
+        accept="image/*"
+        onChange={handleFileSelect}
+        className="hidden"
+        id="image-upload"
+      />
+      <label htmlFor="image-upload" className="upload-button">
+        Select Image
+      </label>
+      
+      {previewUrl && (
+        <div className="preview-container">
+          <img src={previewUrl} alt="Preview" className="preview-image" />
+          <button
+            onClick={handleUpload}
+            disabled={uploading}
+            className="upload-button"
+          >
+            {uploading ? 'Uploading...' : 'Upload to Nodit'}
+          </button>
+        </div>
+      )}
+      
+      {uploadedUrl && (
+        <div className="success-message">
+          ✅ Image uploaded successfully!
+        </div>
+      )}
+    </div>
+  );
 }
 ```
 
-## File Validation
+## Testing the Integration
 
-Images are validated for:
-- **File size**: Maximum 10MB
-- **File types**: JPEG, PNG, GIF, WebP
-- **File format**: Standard image formats
+### Manual Testing
+1. **Upload valid image** - Should work without issues
+2. **Upload invalid file** - Should show error message
+3. **Upload large file** - Should show size error
+4. **Test fallback** - Should use permanent image if upload fails
+5. **Test metadata** - Should generate correct JSON
 
-## Error Handling
+### Edge Cases
+- **No internet connection** - Should fallback gracefully
+- **Nodit service down** - Should use permanent image
+- **Invalid API key** - Should show error message
+- **Rate limiting** - Should handle gracefully
 
-The integration includes comprehensive error handling for:
-- File validation errors
-- Upload failures
-- Network issues
-- Contract interaction errors
-- Wallet connection problems
+## Common Issues I Ran Into
 
-## Security Considerations
+### 1. API Key Not Working
+- **Problem**: 401 Unauthorized errors
+- **Solution**: Check your API key and make sure it's properly set
 
-1. **API Keys**: Store securely in environment variables
-2. **File Validation**: Validate all uploaded files
-3. **Size Limits**: Enforce file size restrictions
-4. **Type Checking**: Only allow image file types
-5. **User Authentication**: Require wallet connection
+### 2. File Size Issues
+- **Problem**: Images too large for upload
+- **Solution**: Added file size validation and compression
 
-## Testing
+### 3. CORS Issues
+- **Problem**: Browser blocking requests
+- **Solution**: Check Nodit CORS settings and request headers
 
-### Test the Integration
+### 4. Metadata Format Issues
+- **Problem**: Invalid JSON metadata
+- **Solution**: Added proper validation and formatting
 
-1. **Set up environment variables**
-2. **Start the development server**: `npm run dev`
-3. **Navigate to**: `http://localhost:3000/sbt-mint`
-4. **Connect your wallet**
-5. **Upload an image**
-6. **Mint an SBT**
+## The Fallback System (The Smart Part)
 
-### Debug Steps
+I implemented a three-level fallback system:
 
-1. Check browser console for errors
-2. Verify environment variables are set
-3. Test Nodit API connectivity
-4. Check wallet connection
-5. Verify contract deployment
+1. **Nodit Upload Success** → Use Nodit URL (best case)
+2. **Nodit Upload Fails** → Use permanent image URL (still works)
+3. **No Upload Attempted** → Use permanent image URL (always works)
 
-## Troubleshooting
+This ensures users can always mint their SBT, even if Nodit is having issues.
 
-### Common Issues
+## Performance Optimization
 
-1. **"Cannot find module '@thalalabs/surf'"**
-   - Solution: Run `npm install @thalalabs/surf`
+I added several optimizations:
 
-2. **"Nodit upload failed"**
-   - Check API key and project ID
-   - Verify network connectivity
-   - Check file size and type
+```typescript
+// Image compression before upload
+const compressImage = (file: File, maxSize: number = 1024 * 1024) => {
+  return new Promise<File>((resolve) => {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+    
+    img.onload = () => {
+      const ratio = Math.sqrt(maxSize / (img.width * img.height));
+      canvas.width = img.width * ratio;
+      canvas.height = img.height * ratio;
+      
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      canvas.toBlob((blob) => {
+        resolve(new File([blob], file.name, { type: 'image/jpeg' }));
+      }, 'image/jpeg', 0.8);
+    };
+    
+    img.src = URL.createObjectURL(file);
+  });
+};
+```
 
-3. **"Wallet not connected"**
-   - Ensure wallet is connected to testnet
-   - Check wallet adapter configuration
+## The Result
 
-4. **"Contract interaction failed"**
-   - Verify contract is deployed
-   - Check gas limits
-   - Ensure sufficient balance
+The Nodit integration is working well! Users can:
+- **Upload custom images** for their SBTs
+- **Fallback to permanent image** if upload fails
+- **Always mint their SBT** regardless of upload status
+- **Get proper error messages** when things go wrong
 
-## Next Steps
+## Best Practices I Learned
 
-1. **Batch Upload**: Implement batch image uploads
-2. **Image Processing**: Add image resizing/optimization
-3. **Metadata Enhancement**: Add more detailed metadata
-4. **Analytics**: Track upload and mint statistics
-5. **Mobile Optimization**: Improve mobile experience
+1. **Always have a fallback** - Things will break
+2. **Validate everything** - Prevent issues before they happen
+3. **Handle errors gracefully** - Users need clear feedback
+4. **Optimize for performance** - Compress images before upload
+5. **Test edge cases** - Network issues, service outages, etc.
 
-## Support
+## The Bottom Line
 
-For issues with:
-- **Nodit**: Check [Nodit documentation](https://developer.nodit.io)
-- **Aptos**: Check [Aptos documentation](https://aptos.dev)
-- **This integration**: Check the code comments and error messages
+Nodit integration was useful for storing custom images, but the permanent image approach is more reliable. The fallback system ensures users can always mint their SBT, which is the most important thing.
+
+*The combination of Nodit for custom images and permanent image fallback gives users the best of both worlds - customization when possible, reliability always.*

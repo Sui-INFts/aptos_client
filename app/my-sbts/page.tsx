@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { getAptosClient, getContractConfig } from "@/lib/aptos-utils";
 import { Loader2, Shield, Clock, TrendingUp, Calendar, Award } from "lucide-react";
 import { AccountAddress } from "@aptos-labs/ts-sdk";
+import { AIInsightsPanel } from "@/components/AIInsightsPanel";
 
 interface SBTDetails {
   tokenObject: string;
@@ -175,13 +176,19 @@ export default function MySBTsPage() {
   };
 
   return (
-    <div className="container mx-auto py-8 space-y-8">
-      <div className="text-center space-y-4">
-        <h1 className="text-4xl font-bold text-gradient">My Credit Score SBTs</h1>
-        <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-          View your DeFi Credit Score Soulbound Tokens and track your credit history
-        </p>
+    <div className="min-h-screen w-full bg-gradient-to-br from-black via-zinc-900 to-black">
+      {/* Header Section */}
+      <div className="w-full md:w-5/6 mx-auto px-4 md:px-0 pt-24 md:pt-32 pb-8">
+        <div className="text-center space-y-4">
+          <h1 className="text-2xl md:text-4xl font-bold text-white">My Credit Score SBTs</h1>
+          <p className="text-sm md:text-xl text-zinc-400 max-w-2xl mx-auto">
+            View your DeFi Credit Score Soulbound Tokens and track your credit history
+          </p>
+        </div>
       </div>
+
+      {/* Main Content */}
+      <div className="w-full md:w-5/6 mx-auto px-4 md:px-0 pb-16 space-y-8">
 
       {!account ? (
         <Card className="max-w-2xl mx-auto">
@@ -233,19 +240,19 @@ export default function MySBTsPage() {
         <div className="max-w-6xl mx-auto">
           <div className="grid gap-6 md:grid-cols-1">
             {/* Main SBT Card */}
-            <Card className="border-2 border-primary/20 shadow-lg">
+            <Card className="bg-zinc-900/50 border-zinc-800/50 backdrop-blur-sm shadow-lg">
               <CardHeader className="bg-gradient-to-r from-primary/10 to-chart-2/10">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                   <div>
-                    <CardTitle className="text-2xl flex items-center gap-2">
-                      <Shield className="h-6 w-6 text-primary" />
+                    <CardTitle className="text-xl md:text-2xl flex items-center gap-2 text-white">
+                      <Shield className="h-5 w-5 md:h-6 md:w-6 text-primary" />
                       Credit Score SBT
                     </CardTitle>
-                    <CardDescription className="mt-2">
+                    <CardDescription className="mt-2 text-zinc-400">
                       Your DeFi Credit Score Soulbound Token
                     </CardDescription>
                   </div>
-                  <Badge className={`${getScoreBadgeColor(sbtData.score)} text-lg px-4 py-2`}>
+                  <Badge className={`${getScoreBadgeColor(sbtData.score)} text-sm md:text-lg px-3 md:px-4 py-1 md:py-2 w-fit`}>
                     {getScoreRating(sbtData.score)}
                   </Badge>
                 </div>
@@ -254,20 +261,20 @@ export default function MySBTsPage() {
                 <div className="grid gap-6 md:grid-cols-2">
                   {/* Score Display */}
                   <div className="space-y-4">
-                    <div className="text-center p-6 bg-muted rounded-lg">
+                    <div className="text-center p-4 md:p-6 bg-zinc-800/30 rounded-lg">
                       <div className="flex items-center justify-center gap-2 mb-2">
-                        <TrendingUp className="h-5 w-5 text-primary" />
-                        <span className="text-sm font-medium text-muted-foreground">Credit Score</span>
+                        <TrendingUp className="h-4 w-4 md:h-5 md:w-5 text-primary" />
+                        <span className="text-xs md:text-sm font-medium text-zinc-400">Credit Score</span>
                       </div>
-                      <div className={`text-5xl font-bold ${getScoreColor(sbtData.score)}`}>
+                      <div className={`text-3xl md:text-5xl font-bold ${getScoreColor(sbtData.score)}`}>
                         {sbtData.score}
                       </div>
-                      <div className="text-sm text-muted-foreground mt-2">
+                      <div className="text-xs md:text-sm text-zinc-400 mt-2">
                         out of {Number(contractConfig.maxCreditScore)}
                       </div>
-                      <div className="mt-4 w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
+                      <div className="mt-4 w-full bg-zinc-700 rounded-full h-2 md:h-3">
                         <div
-                          className={`h-3 rounded-full transition-all ${
+                          className={`h-2 md:h-3 rounded-full transition-all ${
                             sbtData.score >= 800
                               ? "bg-green-600"
                               : sbtData.score >= 600
@@ -283,33 +290,33 @@ export default function MySBTsPage() {
                   </div>
 
                   {/* Details */}
-                  <div className="space-y-4">
-                    <div className="p-4 bg-muted rounded-lg">
+                  <div className="space-y-3 md:space-y-4">
+                    <div className="p-3 md:p-4 bg-zinc-800/30 rounded-lg">
                       <div className="flex items-center gap-2 mb-2">
-                        <Calendar className="h-4 w-4 text-primary" />
-                        <span className="text-sm font-medium">Mint Date</span>
+                        <Calendar className="h-3 w-3 md:h-4 md:w-4 text-primary" />
+                        <span className="text-xs md:text-sm font-medium text-zinc-300">Mint Date</span>
                       </div>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-xs md:text-sm text-zinc-400">
                         {formatDate(sbtData.mintTimestamp)}
                       </p>
                     </div>
 
-                    <div className="p-4 bg-muted rounded-lg">
+                    <div className="p-3 md:p-4 bg-zinc-800/30 rounded-lg">
                       <div className="flex items-center gap-2 mb-2">
-                        <Clock className="h-4 w-4 text-primary" />
-                        <span className="text-sm font-medium">Last Updated</span>
+                        <Clock className="h-3 w-3 md:h-4 md:w-4 text-primary" />
+                        <span className="text-xs md:text-sm font-medium text-zinc-300">Last Updated</span>
                       </div>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-xs md:text-sm text-zinc-400">
                         {formatDate(sbtData.lastUpdated)}
                       </p>
                     </div>
 
-                    <div className="p-4 bg-muted rounded-lg">
+                    <div className="p-3 md:p-4 bg-zinc-800/30 rounded-lg">
                       <div className="flex items-center gap-2 mb-2">
-                        <Award className="h-4 w-4 text-primary" />
-                        <span className="text-sm font-medium">Token Type</span>
+                        <Award className="h-3 w-3 md:h-4 md:w-4 text-primary" />
+                        <span className="text-xs md:text-sm font-medium text-zinc-300">Token Type</span>
                       </div>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-xs md:text-sm text-zinc-400">
                         Soulbound Token (Non-Transferable)
                       </p>
                     </div>
@@ -353,6 +360,15 @@ export default function MySBTsPage() {
             </Card>
           </div>
 
+          {/* AI Insights Panel */}
+          <div className="mt-8">
+            <AIInsightsPanel 
+              creditScore={sbtData.score}
+              userAddress={account?.address.toString()}
+              recentActivity={`User has minted SBT with score ${sbtData.score}. Last updated: ${formatDate(sbtData.lastUpdated)}`}
+            />
+          </div>
+
           {/* Additional Actions */}
           <div className="mt-8 text-center">
             <p className="text-sm text-muted-foreground mb-4">
@@ -371,6 +387,7 @@ export default function MySBTsPage() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }

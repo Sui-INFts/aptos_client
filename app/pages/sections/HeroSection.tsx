@@ -22,18 +22,30 @@ export const HeroSection = (): React.ReactElement => {
           Unlocking a new era of Credit Profiling on Aptos.
         </p>
 
-        <Button className="px-6 py-3 bg-white rounded-[44px] text-[#3e4654] hover:bg-white/90 hover:scale-105 transition-all duration-300 animate-bounce-subtle">
-          <span className="[font-family:'Montserrat',Helvetica] font-semibold text-sm tracking-[-0.28px] leading-7">
-            Get Started
-          </span>
-          <Image
-            className="w-6 h-6 ml-2 transition-transform group-hover:translate-x-1"
-            alt="Arrow"
-            src="/figmaAssets/outline---arrows---arrow-right-up.svg"
-            width={24}
-            height={24}
-          />
-        </Button>
+        <div className="flex flex-col sm:flex-row gap-4 items-center">
+          <Button className="px-6 py-3 bg-white rounded-[44px] text-[#3e4654] hover:bg-white/90 hover:scale-105 transition-all duration-300 animate-bounce-subtle">
+            <span className="[font-family:'Montserrat',Helvetica] font-semibold text-sm tracking-[-0.28px] leading-7">
+              Get Started
+            </span>
+            <Image
+              className="w-6 h-6 ml-2 transition-transform group-hover:translate-x-1"
+              alt="Arrow"
+              src="/figmaAssets/outline---arrows---arrow-right-up.svg"
+              width={24}
+              height={24}
+            />
+          </Button>
+          
+          <Button 
+            variant="outline" 
+            className="px-6 py-3 border-white/20 text-white hover:bg-white/10 rounded-[44px] transition-all duration-300"
+            onClick={() => window.open('https://inft-protocol.gitbook.io/inft-protocol', '_blank')}
+          >
+            <span className="[font-family:'Montserrat',Helvetica] font-semibold text-sm tracking-[-0.28px] leading-7">
+              📚 Documentation
+            </span>
+          </Button>
+        </div>
       </div>
 
       {/* NFT Cards Showcase */}
