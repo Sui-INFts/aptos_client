@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { getAptosClient, getContractConfig } from "@/lib/aptos-utils";
 import { Loader2, Shield, Clock, TrendingUp, Calendar, Award } from "lucide-react";
-import { AccountAddress } from "@aptos-labs/ts-sdk";
+import { formatAddressForContract } from "@/lib/address-utils";
 import { AIInsightsPanel } from "@/components/AIInsightsPanel";
 
 interface SBTDetails {
@@ -30,8 +30,7 @@ export default function MySBTsPage() {
 
       try {
         // Convert account address to proper format
-        const userAddress = AccountAddress.from(account.address);
-        const addressString = userAddress.toString();
+        const addressString = formatAddressForContract(account.address);
         
         console.log("Account address object:", account.address);
         console.log("Converted address string:", addressString);

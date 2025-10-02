@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
 import { getAptosClient, getContractConfig, CreditScoreDataOrNull } from "@/lib/aptos-utils";
 import { Loader2, Coins, Shield, Clock } from "lucide-react";
-import { AccountAddress } from "@aptos-labs/ts-sdk";
+import { formatAddressForContract } from "@/lib/address-utils";
 
 export function CreditScoreMint() {
   const { account, signTransaction } = useWallet();
@@ -29,8 +29,7 @@ export function CreditScoreMint() {
       
       try {
         // Convert account address to proper format
-        const userAddress = AccountAddress.from(account.address);
-        const addressString = userAddress.toString();
+        const addressString = formatAddressForContract(account.address);
         
         // Check if user has minted
         const hasMinted = await client.view({

@@ -21,7 +21,7 @@ export async function POST(request: Request) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.IOINTELLIGENCE_API_KEY}`,
+        'Authorization': `Bearer ${process.env.NEXT_PUBLIC_IO_INTELLIGENCE_API_KEY}`,
       },
       body: JSON.stringify({
         model: 'meta-llama/Llama-3.3-70B-Instruct',
