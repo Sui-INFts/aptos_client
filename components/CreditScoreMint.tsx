@@ -59,12 +59,13 @@ export function CreditScoreMint() {
 
         if (userSbt[0]) {
           const tokenObj = userSbt[0];
+          const tokenObjString = String(tokenObj);
           
           // Get score
           const score = await client.view({
             payload: {
               function: `${contractConfig.moduleAddress}::${contractConfig.moduleName}::get_score`,
-              functionArguments: [tokenObj],
+              functionArguments: [tokenObjString],
             },
           });
 
@@ -72,7 +73,7 @@ export function CreditScoreMint() {
           const lastUpdated = await client.view({
             payload: {
               function: `${contractConfig.moduleAddress}::${contractConfig.moduleName}::get_last_updated`,
-              functionArguments: [tokenObj],
+              functionArguments: [tokenObjString],
             },
           });
 
@@ -80,7 +81,7 @@ export function CreditScoreMint() {
           const mintTimestamp = await client.view({
             payload: {
               function: `${contractConfig.moduleAddress}::${contractConfig.moduleName}::get_mint_timestamp`,
-              functionArguments: [tokenObj],
+              functionArguments: [tokenObjString],
             },
           });
 
@@ -89,7 +90,7 @@ export function CreditScoreMint() {
             lastUpdated: Number(lastUpdated[0]),
             mintTimestamp: Number(mintTimestamp[0]),
             hasMinted: true,
-            tokenObject: String(tokenObj),
+            tokenObject: tokenObjString,
           };
         }
 
@@ -154,7 +155,8 @@ export function CreditScoreMint() {
       // Submit transaction manually using the authenticator
       const committedTransaction = await client.transaction.submit.simple({
         transaction,
-        senderAuthenticator: (signedTransaction as { authenticator?: unknown }).authenticator || signedTransaction,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        senderAuthenticator: (signedTransaction as any).authenticator || signedTransaction,
       });
 
       console.log("Committed transaction:", committedTransaction);

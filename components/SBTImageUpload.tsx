@@ -65,25 +65,26 @@ export function SBTImageUpload() {
 
         if (userSbt[0]) {
           const tokenObj = userSbt[0];
+          const tokenObjString = String(tokenObj);
           
           const score = await client.view({
             payload: {
               function: `${contractConfig.moduleAddress}::${contractConfig.moduleName}::get_score`,
-              functionArguments: [tokenObj],
+              functionArguments: [tokenObjString],
             },
           });
 
           const lastUpdated = await client.view({
             payload: {
               function: `${contractConfig.moduleAddress}::${contractConfig.moduleName}::get_last_updated`,
-              functionArguments: [tokenObj],
+              functionArguments: [tokenObjString],
             },
           });
 
           const mintTimestamp = await client.view({
             payload: {
               function: `${contractConfig.moduleAddress}::${contractConfig.moduleName}::get_mint_timestamp`,
-              functionArguments: [tokenObj],
+              functionArguments: [tokenObjString],
             },
           });
 
@@ -92,7 +93,7 @@ export function SBTImageUpload() {
             lastUpdated: Number(lastUpdated[0]),
             mintTimestamp: Number(mintTimestamp[0]),
             hasMinted: true,
-            tokenObject: String(tokenObj),
+            tokenObject: tokenObjString,
           };
         }
 
@@ -268,7 +269,8 @@ export function SBTImageUpload() {
       console.log("Submitting transaction...");
       const committedTransaction = await client.transaction.submit.simple({
         transaction,
-        senderAuthenticator: (signedTransaction as { authenticator?: unknown }).authenticator || signedTransaction,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        senderAuthenticator: (signedTransaction as any).authenticator || signedTransaction,
       });
 
       console.log("Committed transaction:", committedTransaction);
