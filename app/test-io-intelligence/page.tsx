@@ -221,10 +221,10 @@ export default function TestIOIntelligencePage() {
                   📝 Setup Instructions
                 </h3>
                 <ol className="list-decimal list-inside space-y-2 text-sm text-blue-800 dark:text-blue-200">
-                  <li>Make sure you've added your API key to <code className="bg-blue-100 dark:bg-blue-900 px-1 rounded">.env.local</code></li>
+                  <li>Make sure you&apos;ve added your API key to <code className="bg-blue-100 dark:bg-blue-900 px-1 rounded">.env.local</code></li>
                   <li>Restart your dev server: <code className="bg-blue-100 dark:bg-blue-900 px-1 rounded">pnpm run dev</code></li>
-                  <li>Click "Test Basic Connection" to verify it works</li>
-                  <li>Try "Test Credit Score Analysis" for a practical example</li>
+                  <li>Click &quot;Test Basic Connection&quot; to verify it works</li>
+                  <li>Try &quot;Test Credit Score Analysis&quot; for a practical example</li>
                 </ol>
                 <div className="mt-4 p-3 bg-blue-100 dark:bg-blue-900/50 rounded">
                   <p className="text-xs font-mono text-blue-900 dark:text-blue-100">

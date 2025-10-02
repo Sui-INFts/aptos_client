@@ -10,8 +10,13 @@ import { MetricCard } from "./components/metricCard";
 import { CreditFactorItem } from "./components/creditFactorItem";
 import { toast } from "@/components/ui/use-toast";
 import { aptosClient } from "@/app/utils/aptosClient";
+import { useQuery } from "@tanstack/react-query";
+import { getAptosClient, getContractConfig, CreditScoreDataOrNull } from "@/lib/aptos-utils";
+import { formatAddressForContract } from "@/lib/address-utils";
 import { AIInsightsPanel } from "@/components/AIInsightsPanel";
 import { DeFiActionChat } from "@/components/DeFiActionChat";
+import { SimpleSwapWidget } from "@/components/SimpleSwapWidget";
+import { SBTMint } from "@/components/SBTMint";
 
 type IconComponent = React.ComponentType<{ className?: string; }>;
 
@@ -83,6 +88,156 @@ const Dashboard: React.FC = () => {
 
   const [tokens, setTokens] = useState<Token[]>([]);
   const [nfts, setNFTs] = useState<NFT[]>([]);
+
+  // Check if user has minted an SBT
+  const { data: creditScoreData, isLoading: isSBTLoading, refetch: refetchSBTStatus } = useQuery<CreditScoreDataOrNull>({
+    queryKey: ["creditScore", account?.address],
+    queryFn: async () => {
+      if (!account) return null;
+      
+      const client = getAptosClient();
+      const contractConfig = getContractConfig();
+      
+      console.log("🔍 Checking SBT status for:", {
+        accountAddress: account.address.toString(),
+        contractAddress: contractConfig.moduleAddress,
+        moduleName: contractConfig.moduleName
+      });
+      
+      // Check if the user is the contract deployer/admin
+      const isContractDeployer = account.address.toString().toLowerCase().replace('0x', '') === contractConfig.moduleAddress.toLowerCase();
+      if (isContractDeployer) {
+        console.log("⚠️ User is the contract deployer/admin - checking admin SBT status");
+      }
+      
+      try {
+        // Use the address utility to safely format the address
+        const addressString = formatAddressForContract(account.address);
+        console.log("📡 Calling has_minted function with address:", addressString);
+        
+        const hasMinted = await client.view({
+          payload: {
+            function: `${contractConfig.moduleAddress}::${contractConfig.moduleName}::has_minted`,
+            functionArguments: [addressString],
+          },
+        });
+
+        console.log("📡 has_minted response:", hasMinted);
+        console.log("📡 has_minted[0] value:", hasMinted[0], "type:", typeof hasMinted[0]);
+
+        // Check if the response indicates the user has minted
+        const hasMintedValue = hasMinted[0];
+        console.log("📡 has_minted value analysis:", {
+          value: hasMintedValue,
+          type: typeof hasMintedValue,
+          isTrue: hasMintedValue === true,
+          isTruthy: !!hasMintedValue,
+          isOne: hasMintedValue === 1,
+          isString: hasMintedValue === "true"
+        });
+        
+        if (!hasMintedValue || hasMintedValue === false || hasMintedValue === 0) {
+          console.log("❌ User has not minted SBT");
+          return {
+            score: 0,
+            lastUpdated: 0,
+            mintTimestamp: 0,
+            hasMinted: false,
+          };
+        }
+
+        console.log("✅ User has minted SBT, fetching details...");
+
+        // Get user's SBT object
+        const userSbt = await client.view({
+          payload: {
+            function: `${contractConfig.moduleAddress}::${contractConfig.moduleName}::get_user_sbt`,
+            functionArguments: [addressString],
+          },
+        });
+
+        console.log("📡 get_user_sbt response:", userSbt);
+
+        let tokenObj = null;
+        const optionValue = userSbt[0];
+        if (optionValue && typeof optionValue === 'object') {
+          if ('vec' in optionValue && Array.isArray(optionValue.vec) && optionValue.vec.length > 0) {
+            tokenObj = optionValue.vec[0];
+          } else {
+            tokenObj = optionValue;
+          }
+        }
+        
+        if (tokenObj) {
+          const tokenObjString = String(tokenObj);
+          console.log("🎯 Token object found:", tokenObjString);
+
+          const score = await client.view({
+            payload: {
+              function: `${contractConfig.moduleAddress}::${contractConfig.moduleName}::get_score`,
+              functionArguments: [tokenObjString],
+            },
+          });
+
+          const lastUpdated = await client.view({
+            payload: {
+              function: `${contractConfig.moduleAddress}::${contractConfig.moduleName}::get_last_updated`,
+              functionArguments: [tokenObjString],
+            },
+          });
+
+          const mintTimestamp = await client.view({
+            payload: {
+              function: `${contractConfig.moduleAddress}::${contractConfig.moduleName}::get_mint_timestamp`,
+              functionArguments: [tokenObjString],
+            },
+          });
+
+          const result = {
+            score: Number(score[0]),
+            lastUpdated: Number(lastUpdated[0]),
+            mintTimestamp: Number(mintTimestamp[0]),
+            hasMinted: true,
+            tokenObject: tokenObjString,
+          };
+
+          console.log("✅ SBT data retrieved:", result);
+          return result;
+        }
+
+        console.log("⚠️ Token object not found in response");
+        return {
+          score: 0,
+          lastUpdated: 0,
+          mintTimestamp: 0,
+          hasMinted: false,
+        };
+      } catch (error) {
+        console.error("❌ Error fetching credit score data:", error);
+        return null;
+      }
+    },
+    enabled: !!account,
+    retry: false,
+    refetchOnWindowFocus: true,
+    refetchInterval: 10000, // Refetch every 10 seconds
+  });
+
+  const hasMintedSBT = creditScoreData?.hasMinted || false;
+  
+  // Special case: If user is the contract deployer/admin, they should have access
+  const isContractDeployer = account && account.address.toString().toLowerCase().replace('0x', '') === getContractConfig().moduleAddress.toLowerCase();
+  const finalHasMintedSBT = hasMintedSBT || isContractDeployer;
+  
+  // Debug logging
+  console.log("Dashboard SBT Status:", {
+    hasMintedSBT,
+    isContractDeployer,
+    finalHasMintedSBT,
+    isSBTLoading,
+    creditScoreData,
+    accountAddress: account?.address.toString()
+  });
 
   // Calculate address age based on first transaction with better error handling
   const calculateAddressAge = useCallback(async (address: string): Promise<number> => {
@@ -433,6 +588,25 @@ const Dashboard: React.FC = () => {
           <div className="text-center md:text-left flex-1">
             <h1 className="text-2xl md:text-4xl font-bold text-white mb-2 md:mb-4">Your INFT Credit Profile</h1>
             <p className="text-zinc-400 text-sm md:text-lg">AI-powered identity card that evolves with your Web3 activity</p>
+            
+            {/* SBT Status Indicator */}
+            {!isSBTLoading && (
+              <div className="mt-3 flex items-center justify-center md:justify-start gap-2">
+                {finalHasMintedSBT ? (
+                  <div className="flex items-center gap-2 px-3 py-1 bg-green-500/20 border border-green-500/30 rounded-full">
+                    <CheckCircle className="h-4 w-4 text-green-400" />
+                    <span className="text-green-400 text-sm font-medium">
+                      {isContractDeployer ? "Contract Admin - All Features Unlocked" : "SBT Holder - All Features Unlocked"}
+                    </span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 px-3 py-1 bg-orange-500/20 border border-orange-500/30 rounded-full">
+                    <AlertCircle className="h-4 w-4 text-orange-400" />
+                    <span className="text-orange-400 text-sm font-medium">Mint SBT to Unlock Premium Features</span>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
           
           {/* Desktop Action Buttons */}
@@ -441,7 +615,7 @@ const Dashboard: React.FC = () => {
               variant="default" 
               size="sm" 
               onClick={() => setShowKanaSwap(!showKanaSwap)}
-              disabled={!connected}
+              disabled={!connected || !finalHasMintedSBT}
               className="bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 text-white font-semibold shadow-lg hover:shadow-xl transition-all border-0"
             >
               <ArrowRightLeft className="h-4 w-4 mr-2" />
@@ -451,6 +625,7 @@ const Dashboard: React.FC = () => {
               variant="outline" 
               size="sm" 
               onClick={() => setShowDeFiActions(!showDeFiActions)}
+              disabled={!finalHasMintedSBT}
               className="border-green-700 text-green-700 hover:bg-green-700 hover:text-white"
             >
               <ArrowRightLeft className="h-4 w-4 mr-2" />
@@ -460,6 +635,7 @@ const Dashboard: React.FC = () => {
               variant="outline" 
               size="sm" 
               onClick={() => setShowAIInsights(!showAIInsights)}
+              disabled={!finalHasMintedSBT}
               className="border-zinc-700"
             >
               <Sparkles className="h-4 w-4 mr-2" />
@@ -475,6 +651,16 @@ const Dashboard: React.FC = () => {
               <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
               Refresh
             </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => refetchSBTStatus()}
+              disabled={isSBTLoading}
+              className="border-blue-700 text-blue-700 hover:bg-blue-700 hover:text-white"
+            >
+              <RefreshCw className={`h-4 w-4 mr-2 ${isSBTLoading ? 'animate-spin' : ''}`} />
+              Check SBT
+            </Button>
           </div>
 
           {/* Mobile Action Buttons */}
@@ -483,7 +669,7 @@ const Dashboard: React.FC = () => {
               variant="default" 
               size="sm" 
               onClick={() => setShowKanaSwap(!showKanaSwap)}
-              disabled={!connected}
+              disabled={!connected || !finalHasMintedSBT}
               className="bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 text-white font-semibold shadow-lg hover:shadow-xl transition-all border-0"
             >
               <ArrowRightLeft className="h-4 w-4 mr-1" />
@@ -493,6 +679,7 @@ const Dashboard: React.FC = () => {
               variant="outline" 
               size="sm" 
               onClick={() => setShowDeFiActions(!showDeFiActions)}
+              disabled={!finalHasMintedSBT}
               className="border-green-700 text-green-700 hover:bg-green-700 hover:text-white"
             >
               <ArrowRightLeft className="h-4 w-4 mr-1" />
@@ -502,6 +689,7 @@ const Dashboard: React.FC = () => {
               variant="outline" 
               size="sm" 
               onClick={() => setShowAIInsights(!showAIInsights)}
+              disabled={!finalHasMintedSBT}
               className="border-zinc-700"
             >
               <Sparkles className="h-4 w-4 mr-1" />
@@ -517,8 +705,69 @@ const Dashboard: React.FC = () => {
               <RefreshCw className={`h-4 w-4 mr-1 ${isLoading ? 'animate-spin' : ''}`} />
               Refresh
             </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => refetchSBTStatus()}
+              disabled={isSBTLoading}
+              className="border-blue-700 text-blue-700 hover:bg-blue-700 hover:text-white"
+            >
+              <RefreshCw className={`h-4 w-4 mr-1 ${isSBTLoading ? 'animate-spin' : ''}`} />
+              SBT
+            </Button>
           </div>
         </div>
+
+        {/* SBT Status Loading */}
+        {isSBTLoading && (
+          <div className="mb-8">
+            <Card className="border-2 border-zinc-400/30 bg-zinc-950/20">
+              <CardContent className="flex items-center justify-center py-8">
+                <div className="flex items-center gap-3">
+                  <RefreshCw className="h-5 w-5 animate-spin text-zinc-400" />
+                  <span className="text-zinc-400">Checking SBT status...</span>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+
+        {/* SBT Minting Section - Show if user hasn't minted SBT */}
+        {!finalHasMintedSBT && !isSBTLoading && (
+          <div className="mb-8">
+            <Card className="bg-zinc-900/50 border-zinc-800/50 backdrop-blur-sm">
+              <CardHeader className="text-center pb-4">
+                <CardTitle className="flex items-center justify-center gap-2 text-xl md:text-2xl text-white">
+                  <Shield className="h-6 w-6 text-blue-400" />
+                  Mint Your Credit Score SBT
+                </CardTitle>
+                <CardDescription className="text-zinc-400 text-base md:text-lg">
+                  Unlock advanced features by minting your Credit Score Soulbound Token
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <div className="max-w-2xl mx-auto">
+                  <SBTMint />
+                </div>
+                <div className="mt-6 p-4 bg-zinc-800/30 border border-zinc-700/50 rounded-lg">
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center">
+                      <CheckCircle className="w-4 h-4 text-blue-400" />
+                    </div>
+                    <div className="flex-1 text-sm text-zinc-300">
+                      <p className="font-semibold mb-1 text-white">Unlock Premium Features</p>
+                      <p className="text-zinc-400">
+                        Once you mint your SBT, you&apos;ll gain access to AI insights, DeFi actions, 
+                        and token swapping features. Your SBT serves as your identity card in the INFTs ecosystem.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
         {/* Tabs */}
         <div className="w-full border-b border-zinc-800/50 mb-6 md:mb-8">
@@ -542,7 +791,35 @@ const Dashboard: React.FC = () => {
 
         {/* Tab Content */}
         {activeTab === 'On Chain' ? (
-          <div className="space-y-8">
+          <div className="space-y-6 md:space-y-8">
+            {/* Swap Widget - Show at top when active */}
+            {showKanaSwap && (
+              <div>
+                <SimpleSwapWidget onClose={() => setShowKanaSwap(false)} />
+              </div>
+            )}
+
+            {/* DeFi Actions Chat - Show at top when active */}
+            {showDeFiActions && (
+              <div>
+                <DeFiActionChat 
+                  creditScore={onChainData.overallScore}
+                  userAddress={account?.address.toString()}
+                />
+              </div>
+            )}
+
+            {/* AI Insights Panel - Show at top when active */}
+            {showAIInsights && (
+              <div>
+                <AIInsightsPanel 
+                  creditScore={onChainData.overallScore}
+                  userAddress={account?.address.toString()}
+                  recentActivity={`${onChainData.transactions} transactions, ${onChainData.totalBalance} portfolio value, ${onChainData.addressAge} days account age`}
+                />
+              </div>
+            )}
+
             {/* Credit Score Overview */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-8">
               {/* Main Credit Score */}
@@ -822,95 +1099,6 @@ const Dashboard: React.FC = () => {
                 </CardContent>
               </Card>
             </div>
-
-            {/* Kana Labs Swap Widget */}
-            {showKanaSwap && connected && (
-              <div className="mt-6 md:mt-8">
-                <Card className="border-2 border-orange-400/30 bg-gradient-to-br from-orange-950/20 to-pink-950/20">
-                  <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                    <div>
-                      <CardTitle className="flex items-center gap-2 text-lg md:text-2xl">
-                        <ArrowRightLeft className="h-5 w-5 md:h-6 md:w-6 text-orange-400" />
-                        <span className="bg-gradient-to-r from-orange-400 to-pink-400 bg-clip-text text-transparent">
-                          Kana Labs Swap
-                        </span>
-                      </CardTitle>
-                      <CardDescription className="mt-2 text-sm md:text-base">
-                        Swap tokens on Aptos with best rates via DEX aggregation
-                      </CardDescription>
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setShowKanaSwap(false)}
-                      className="border-orange-400/50 text-orange-400 hover:bg-orange-400/10 w-full sm:w-auto"
-                    >
-                      Close
-                    </Button>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="rounded-lg overflow-hidden border-2 border-orange-400/20 shadow-2xl">
-                      <iframe
-                        src={`https://app.kanalabs.io/swap?wallet=${account?.address.toString()}`}
-                        className="w-full h-[500px] md:h-[650px] bg-white dark:bg-zinc-950"
-                        title="Kana Labs Swap Widget"
-                        allow="clipboard-write; payment"
-                        sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox"
-                      />
-                    </div>
-                    
-                    <div className="mt-4 p-4 bg-blue-950/20 border border-blue-400/30 rounded-lg">
-                      <div className="flex items-start gap-3">
-                        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center">
-                          <svg className="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                        </div>
-                        <div className="flex-1 text-sm text-blue-200">
-                          <p className="font-semibold mb-1">Powered by Kana Labs DEX Aggregator</p>
-                          <p className="text-blue-300/80">
-                            Kana Labs aggregates liquidity from multiple Aptos DEXs (Liquidswap, PancakeSwap, Thala) 
-                            to provide you with the best swap rates. Your wallet is automatically connected for seamless trading.
-                          </p>
-                          <a 
-                            href="https://docs.kanalabs.io/" 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 mt-2 text-blue-400 hover:text-blue-300 transition-colors"
-                          >
-                            Learn more about Kana Labs
-                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                            </svg>
-                          </a>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            )}
-
-            {/* DeFi Actions Chat */}
-            {showDeFiActions && (
-              <div className="mt-8">
-                <DeFiActionChat 
-                  creditScore={onChainData.overallScore}
-                  userAddress={account?.address.toString()}
-                />
-              </div>
-            )}
-
-            {/* AI Insights Panel */}
-            {showAIInsights && (
-              <div className="mt-8">
-                <AIInsightsPanel 
-                  creditScore={onChainData.overallScore}
-                  userAddress={account?.address.toString()}
-                  recentActivity={`${onChainData.transactions} transactions, ${onChainData.totalBalance} portfolio value, ${onChainData.addressAge} days account age`}
-                />
-              </div>
-            )}
           </div>
         ) : (
           // Off Chain Tab

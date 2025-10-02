@@ -3,13 +3,9 @@
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { 
   createIOIntelligenceClient, 
-  analyzeCreditScoreBehavior,
-  generateFinancialRecommendations,
-  explainCreditScoreFactors,
   IO_MODELS 
 } from "@/lib/io-intelligence-utils";
 import { Loader2, Sparkles, Brain, TrendingUp, Info } from "lucide-react";

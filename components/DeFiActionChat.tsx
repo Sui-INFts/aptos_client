@@ -34,6 +34,8 @@ interface WalletInfoAction {
   infoType: 'transactions' | 'nfts' | 'general';
 }
 
+// Type definition for DeFi actions
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 type DeFiAction = SwapAction | WalletBalanceAction | WalletInfoAction;
 
 interface DeFiActionChatProps {
@@ -136,7 +138,7 @@ export function DeFiActionChat({ creditScore, userAddress }: DeFiActionChatProps
       const aptosClient = getAptosClient();
       
       if (infoType === 'transactions') {
-        const transactions = await aptosClient.transaction.getAccountTransactions({
+        const transactions = await aptosClient.getAccountTransactions({
           accountAddress: userAddress,
           options: { limit: 5 }
         });
