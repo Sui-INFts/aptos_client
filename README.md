@@ -3,7 +3,7 @@
 <h3 align="center">Next-generation intelligent NFTs powered by AI, evolving with your data</h3>
 
 <p align="center">
-  <a href="https://aptos.infts.xyz/" style="color: #a77dff">Platform</a> | <a href="https://www.figma.com/deck/FcCmfAIWAyBsNf52hWGjge" style="color: #a77dff">Pitchdeck</a> | <a href="https://youtu.be/m6f3N-g75k8" style="color: #a77dff">Demo Video</a>
+  <a href="https://aptos.infts.xyz/" style="color: #a77dff">Platform</a> | <a href="https://www.figma.com/deck/FcCmfAIWAyBsNf52hWGjge" style="color: #a77dff">Pitchdeck</a> | <a href="https://youtu.be/m6f3N-g75k8" style="color: #a77dff">Demo Video</a> | <a href="https://inft-protocol.gitbook.io/inft-protocol" style="color: #a77dff">Document</a>
 </p>
 
 <p align="center">
