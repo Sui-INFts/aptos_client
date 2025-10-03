@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Sui-INFts/aptos_client/blob/main/SBT_MINTING_UPDATE.md" style="color: #a77dff">SBT Minting</a> | <a href="https://github.com/Sui-INFts/aptos_client/blob/main/NODIT_INTEGRATION.md" style="color: #a77dff">Nodit</a> | <a href="https://github.com/Sui-INFts/aptos_client/blob/main/KANA_LABS_SWAP_INTEGRATION.md" style="color: #a77dff">Kana Labs</a>
+  <a href="https://github.com/Sui-INFts/aptos_client/blob/main/SBT_MINTING_UPDATE.md" style="color: #a77dff">SBT Minting</a> | <a href="https://github.com/Sui-INFts/aptos_client/blob/main/NODIT_INTEGRATION.md" style="color: #a77dff">Nodit</a> | <a href="https://github.com/Sui-INFts/aptos_client/blob/main/KANA_LABS_SWAP_INTEGRATION.md" style="color: #a77dff">Kana Labs</a> | <a href="https://github.com/Sui-INFts/aptos_client/blob/main/CREDIT_SCORE_INTEGRATION.md" style="color: #a77dff">Credit Score</a>
 </p>
 
 ![image](https://github.com/user-attachments/assets/2fc951f2-a160-4388-9275-a044a28e0290)
