@@ -75,6 +75,17 @@ Maximum Credit Score: 1000 points
   * SEAL encryption is not applied in Aptos mode.
   * iO AI model still processes all scoring logic.
   * Users can interact with AI agents and directly perform on-chain DeFi transactions via Aptos smart contracts.
+ 
+## How to use tech?
+
+### [Kana Labs Integration](https://github.com/Sui-INFts/aptos_client/blob/main/KANA_LABS_SWAP_INTEGRATION.md)
+
+We integrate **Kana Labs** directly into the INFT dashboard to provide users with a seamless token swap experience on the Aptos network. By embedding Kana Labs’ widget, users can perform swaps in just one click through the “Swap Tokens” button. The system automatically connects to the user’s wallet and aggregates liquidity from multiple Aptos DEXs such as Liquidswap, PancakeSwap, and Thala. This ensures users receive the best available rates without needing to manually search across platforms. The integration is designed with a responsive layout for both desktop and mobile use, supports SBT-based access control, and uses secure iframe sandboxing to protect user data and interactions.
+
+### [Nodit Storage Integration](https://github.com/Sui-INFts/aptos_client/blob/main/NODIT_INTEGRATION.md)
+
+For SBTs (Soulbound Tokens), we use **Nodit Storage** to securely and reliably store images and metadata. When a user mints their credit score SBT, the image and metadata undergo validation before being uploaded. Nodit then generates a metadata URI that is directly tied to the user’s on-chain SBT. This ensures immutability and persistence of data, providing transparency and trust in the credit scoring process. The integration also includes a fallback mechanism: if no custom image is uploaded, a default static SBT image is used. Additionally, error handling and file validation (size/type checks) are implemented to improve the user experience, ensuring uploads are smooth and secure.
+
 
 ## Role of iO AI Model
 
