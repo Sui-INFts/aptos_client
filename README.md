@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <a href="" style="color: #a77dff">Aptos</a> | <a href="https://explorer.aptoslabs.com/txn/0x1e87c79ffd90a73b7eff4cfcc32dd240a34f91755794e2a6fd50ddea76456db5?network=testnet" style="color: #a77dff">INFT SBT Minting</a> | <a href="https://github.com/Sui-INFts/aptos_client/blob/main/KANA_LABS_SWAP_INTEGRATION.md" style="color: #a77dff">Kana Labs</a>
+  <a href="" style="color: #a77dff">Aptos</a> | <a href="https://github.com/Sui-INFts/aptos_client/blob/main/NODIT_INTEGRATION.md" style="color: #a77dff">Nodit</a> | <a href="https://github.com/Sui-INFts/aptos_client/blob/main/KANA_LABS_SWAP_INTEGRATION.md" style="color: #a77dff">Kana Labs</a>
 </p>
 
 ![image](https://github.com/user-attachments/assets/2fc951f2-a160-4388-9275-a044a28e0290)
